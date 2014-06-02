@@ -6,7 +6,8 @@ Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
 
-import sys, termios, tty, os, h5py
+#import sys, termios, tty, os, h5py #FR
+import sys, os, h5py #FR
 import numpy as np
 from logging import info, debug, exception, warning, critical
 from puq.options import options

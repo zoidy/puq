@@ -4,7 +4,8 @@ Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
 
-import time, os, re, pwd, h5py, sys
+#import time, os, re, pwd, h5py, sys #FR
+import time, os, re, h5py, sys #FR
 import numpy as np
 from puq.testprogram import TestProgram
 from numpy import ndarray
@@ -69,7 +70,7 @@ class Sweep(object):
             #h5.attrs['id'] = self.id
             h5.attrs['date'] = time.strftime("%b %d %H:%M %Z %Y", time.localtime())
             h5.attrs['hostname'] = gethostname()
-            h5.attrs['username'] = pwd.getpwuid(os.getuid()).pw_name
+            h5.attrs['username'] = "puq user" #FR
             h5.attrs['UQtype'] = self.psweep.__class__.__name__.lower()
             h5.attrs['description'] = self.description
 
@@ -104,6 +105,11 @@ class Sweep(object):
                 h5['input/script'] = "Source was unavailable."
             h5.close()
 
+    #FR
+    def _save_only(self):
+        self._save_hdf5()
+        return True
+        
     def _save_and_run(self):
         self._save_hdf5()
         res = self.host.run()
@@ -111,7 +117,7 @@ class Sweep(object):
             self._save_hdf5()
         return res
 
-    def run(self, fn=None, overwrite=False):
+    def run(self, fn=None, overwrite=False, dryrun=False):#FR
         """
         Calls PSweep.run() to run all the jobs in the Sweep.  Collect the data
         from the outputs and call the PSweep analyze method.  If the PSweep method
@@ -149,7 +155,7 @@ class Sweep(object):
                         sys.exit(-1)
                 os.remove(fn)
         vprint(1, 'Saving run to %s.hdf5' % self.fname)
-        return self.psweep.run(self)
+        return self.psweep.run(self,dryrun)#FR
 
     def extend(self, num=None):
         return self.psweep.extend(num)

@@ -3,7 +3,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-
+import thread,time #FR
 import socket
 import os, re, signal, logging
 from logging import debug
@@ -30,7 +30,8 @@ class Host(object):
         except:
             pass
 
-        self.timestr = tstr + " -f \"HDF5:{'name':'time','value':%e,'desc':''}:5FDH\""
+        #self.timestr = tstr + " -f \"HDF5:{'name':'time','value':%e,'desc':''}:5FDH\""
+        self.timestr="" #FR
         self.run_num = 0
 
     def reinit(self):
@@ -248,6 +249,7 @@ class InteractiveHost(Host):
             if j['status'] == 0 or j['status'] == 'X':
                 cmd = j['cmd']
                 cpus = min(j['cpu'], self.cpus)
+                
                 if cpus > self._cpus_free:
                     self.wait(cpus)
                 self._cpus_free -= cpus
@@ -255,18 +257,55 @@ class InteractiveHost(Host):
                 serr = open(j['outfile']+'.err', 'w')
                 cmd = self.timestr + ' ' + cmd
                 if j['dir']:
-                    cmd = 'cd %s;%s' % (j['dir'], cmd)
+                    cmd = 'cd %s && %s' % (j['dir'], cmd) #FR changed ; to &&
+                    
+                print(cpus,self._cpus_free,cmd) #FR
+                
                 # We are going to wait for each process, so we must keep the Popen object
                 # around, otherwise it will quietly wait for the process and exit,
                 # leaving our wait function waiting for nonexistent processes.
                 p = Popen(cmd, shell=True, stdout=sout, stderr=serr)
-                j['status'] = 'R'
+                
+                #FR
+                thread.start_new_thread(self.process_waiter,(p, "cmd:{} pid:{}".format(     j['cmd'],p.pid)))
+                
+                j['status'] = 'R' 
                 self._running.append((p, j))
                 self._monitor.start_job(j['cmd'], p.pid)
+                                
         self.wait(0)
 
+    #FR
+    def process_waiter(self,popen, description):
+        #http://stackoverflow.com/questions/100624
+        t_start=time.clock()
+        t_end=t_start
+        try: 
+            popen.wait()
+            t_end=time.clock()
+        finally: 
+            w=[popen.pid,popen.returncode]
+            for p, j in self._running:
+                if p.pid == w[0]:
+                    self._running.remove((p, j))
+                    if w[1]>0:
+                        self.handle_error(w[1], j)
+                        j['status'] = 'X'
+                    else:
+                        j['status'] = 'F'
+                    self._cpus_free += j['cpu']
+                    
+                    #substitute the time command in Host __init__
+                    f=open(j['outfile']+'.err','w')
+                    f.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(
+                        t_end-t_start))
+                    f.close()
+                    
+                    
+                    break
+        
     def handle_error(self, stat, j):
-        stat = os.WEXITSTATUS(stat)
+        #stat = os.WEXITSTATUS(stat) #FR
         print 40*'*'
         print "ERROR: %s returned %s" % (j['cmd'], stat)
         try:
@@ -277,23 +316,13 @@ class InteractiveHost(Host):
             pass
         print "Stdout is in %s.out and stderr is in %s.err." % (j['outfile'], j['outfile'])
         print 40*'*'
-
-    def wait(self, cpus):
+    
+    #FR
+    def wait(self,cpus):
         while len(self._running):
-            w = os.waitpid(-1, 0)
-            for p, j in self._running:
-                if p.pid == w[0]:
-                    self._running.remove((p, j))
-                    if os.WEXITSTATUS(w[1]):
-                        self.handle_error(w[1], j)
-                        j['status'] = 'X'
-                    else:
-                        j['status'] = 'F'
-                    self._cpus_free += j['cpu']
-                    break
+            time.sleep(0.1)
             if cpus and self._cpus_free >= cpus:
                 return
-        return
 
 class TestHost(Host):
     def __init__(self, cpus=0, cpus_per_node=0, walltime='1:00:00', pack=1):
