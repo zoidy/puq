@@ -1,5 +1,6 @@
 from numpy import *
 from scipy.special import jacobi, gamma, legendre
+import operator #FR
 
 """@package smolyak_funcs
 Functions for Smolyak UQ method
@@ -14,7 +15,9 @@ def memoize(f, cache={}):
     return g
 
 def factorial(k):
-    return reduce(int.__mul__, xrange(1, k + 1), 1)
+    #replaced int.__mul__ with operator.mul to fix an error
+    #with the morris test problem
+    return reduce(operator.mul, xrange(1, k + 1), 1)
 
 def nelms(n, m):
     return factorial(n + m) / factorial(m) / factorial(n)
