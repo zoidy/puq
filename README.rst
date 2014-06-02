@@ -3,11 +3,13 @@ Introduction
 ************
 
 :Version: 2.2
-:Authors: Martin Hunt
-:Web site: https://github.com/martin-hunt/puq
+:Authors: Martin Hunt, Fernando Rios
+:Web site: https://github.com/zoidy/puq
 :Documentation: http://martin-hunt.github.io/puq/
 :Copyright: This document has been placed in the public domain.
 :License: MIT License.
+
+This fork aims to port some/most of puq to the Windows platform. 
 
 Purpose
 =======
