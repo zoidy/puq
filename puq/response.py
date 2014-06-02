@@ -85,9 +85,12 @@ class Function(object):
             except:
                 pass
             raise ValueError('New PDF has a range outside the original PDF')
-
+#FR
+#    def pdf(self, fit=True, params=[], force=False, min=None, max=None,
+#            return_samples=False, psamples=None):
     def pdf(self, fit=True, params=[], force=False, min=None, max=None,
-            return_samples=False, psamples=None):
+            return_samples=False, psamples=None,numsamples=None):
+
 
         if not self.params and not params:
             raise ValueError("Cannot generate PDF for response function without params.")
@@ -107,7 +110,7 @@ class Function(object):
 
         # get parameter pdf samples
         if psamples is None:
-            xseed = get_psamples(self.params)
+            xseed = get_psamples(self.params,num=numsamples) #FR                
         else:
             xseed = psamples
 
