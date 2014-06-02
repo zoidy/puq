@@ -33,7 +33,7 @@ import webbrowser, shutil, atexit, shelve
 DB_LIST = ["http://dash.prism.nanohub.org/prism/default/call/run/upload_service",
            "http://127.0.0.1:8000/prism/default/call/run/upload_service"
            ]
-PUQPREFS = "~/.puq"
+PUQPREFS = ".puq-analyze-prefs"
 
 def upload_file(filename, rename=''):
     from poster.encode import multipart_encode
