@@ -82,7 +82,8 @@ if __name__ == "__main__":
             sources=["src/sg.cpp", "src/sparse_grid_cc.cpp"],
             include_dirs=incdirs,
             language="c++",
-            libraries=["stdc++"]),
+            libraries=["stdc++"],
+            extra_link_args=["-static"]),
         ],
         classifiers=[
         "Development Status :: 5 - Production/Stable",
