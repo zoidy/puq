@@ -70,7 +70,7 @@ if __name__ == "__main__":
         author_email='mmh@purdue.edu',
         packages=['puq', 'puqutil'],
         package_data={'': ['*.rst'], 'puqutil': ['*.f90', '*.h']},
-        scripts=['bin/puq'],
+        scripts=['bin/puq','bin/puq.bat'],
         url='https://github.com/martin-hunt/puq',
         license=open('LICENSE.rst').read(),
         description='PUQ Uncertainty Quantification Tool',
