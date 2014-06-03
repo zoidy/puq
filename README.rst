@@ -9,68 +9,46 @@ Introduction
 :Copyright: This document has been placed in the public domain.
 :License: MIT License.
 
-This fork aims to port some/most of puq to the Windows platform. 
+See https://github.com/martin-hunt/puq for the original readme.
 
 Purpose
 =======
 
-PUQ is a framework for building response surfaces and performing Uncertainty
-Quantification (UQ) and sensitivity analysis. It was created with the goal of
-making an easy to use framework that could be easily integrated and extended.
+This fork aims to port some/most of puq to the Windows platform and add some functionality.
 
-Features
-========
+Functionality
+========================
+In addition to running on Windows, this version of puq adds the following functionality:
 
-* Implemented as a Python library but can be used from the command line
-  with a minimum of Python knowledge.
+- Ability to conduct sensitivity analysis using the Morris method (requires 
+  `my version <https://github.com/zoidy/SALib>`_  of the SALib library)
+- Ability to conduct a dry run (all steps of the run are shown, including the command lines to 
+  be executed, except the actual model is not run.) In order to have a complete output file, a dummy
+  output value is used.
+- Ability to specify the number of samples to use when generating a PDF of a response surface
+  from a script.
 
-* Collects all results into a single HDF5 file.
-
-* Implements Monte Carlo and Latin Hypercube sampling.
-
-* For better scalability, includes a Smolyak sparse grid method.
-
-* Builds response surfaces from sample points.
-
-* Includes GUIs to visualize and compare PDFs and response surfaces.
-
-* Can use PyMC to perform Bayesian calibration on input parameters.
-
-Dependencies
+Installation
 ============
 
-PUQ is tested to work under Python 2.6+. Python 3 is not yet supported.
+The installation procedure and dependencies are the same as https://github.com/martin-hunt/puq.
+To conduct a Morris sensitivity analysis, the version of SALib located at 
+https://github.com/zoidy/SALib is required.
+To build sparse_grid_cc you will need a C++ compiler such as gcc. If using MinGW, install 
+(for a 32 bit system),
 
-To build, you will need a working C/C++ compiler.
-PUQ requires the following Python modules:
+- mingw32-base (I used 2013072200)
+- mingw32-gcc-g++ (I used 4.8.1-4)
 
-- numpy >= 1.6
-- scipy >= 0.8
-- matplotlib >= 1.1
-- sympy >= 0.7.1
-- h5py >= 1.3
-- jsonpickle
-- poster
-- nose
+and make sure mingw32\bin is on your path. Then running the installation::
+    
+    python setup.py
+    
+will cause sparse_grid_cc to build. Afterwards, put this library into the site-packages folder.
 
+What works
+==========
+Most functionality of the original puq should work. At the moment, only the InteractiveHost
+is supported.
 
-Install
-=======
-
-This package uses distutils, which is the default way of installing
-python modules. To install in your home directory, use::
-
-  python setup.py install --user
-
-To install for all users on Unix/Linux or Mac::
-
-  python setup.py build
-  sudo python setup.py install
-
-
-History
-=======
-
-PUQ is based upon work supported by the Department of Energy [National Nuclear Security Administration]
-under Award Number DE-FC52-08NA28617.”
 
