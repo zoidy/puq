@@ -218,13 +218,13 @@ class InteractiveHost(Host):
     # run, monitor and status return
     # True (1) is successful
     # False (0) for errors or unfinished
-    def run(self):
+    def run(self,dryrun=False):
         """ Run all the jobs in the queue """
         self._cpus_free = self.cpus_per_node
         self._running = []
         self._monitor = TextMonitor()
         try:
-            self._run()
+            self._run(dryrun)
             return True
         except KeyboardInterrupt:
             print '***INTERRUPT***\n'
@@ -234,7 +234,7 @@ class InteractiveHost(Host):
                 j['status'] = 0
             return False
 
-    def _run(self):
+    def _run(self,dryrun=False):
 
         # fix for some broken saved jobs
         for i, j in enumerate(self.jobs):
@@ -245,6 +245,7 @@ class InteractiveHost(Host):
         if errors:
             print "Previous run had %d errors. Retrying." % errors
 
+        count=1 #FR
         for j in self.jobs:
             if j['status'] == 0 or j['status'] == 'X':
                 cmd = j['cmd']
@@ -258,16 +259,33 @@ class InteractiveHost(Host):
                 cmd = self.timestr + ' ' + cmd
                 if j['dir']:
                     cmd = 'cd %s && %s' % (j['dir'], cmd) #FR changed ; to &&
-                    
-                print(cpus,self._cpus_free,cmd) #FR
+                
+                
+                #FR                
+                isdryrun=""
+                if dryrun:
+                    isdryrun='--DRY RUN--' 
+                jobstr='Job {} of {} {}'.format(count,len(self.jobs),isdryrun)
+                cpustr='CPUs requested: {} available: {}'.format(cpus,self._cpus_free)
+                borderstr='================================'
+                print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')                
+                
+                if dryrun:
+                    cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
+                
+                cmd+= ' && echo. && echo {} && echo {} && echo {}'.format(jobstr,cpustr,cmd)
                 
                 # We are going to wait for each process, so we must keep the Popen object
                 # around, otherwise it will quietly wait for the process and exit,
-                # leaving our wait function waiting for nonexistent processes.
-                p = Popen(cmd, shell=True, stdout=sout, stderr=serr)
+                # leaving our wait function waiting for nonexistent processes.               
+                p = Popen(cmd , shell=True, stdout=sout, stderr=serr)
                 
                 #FR
-                thread.start_new_thread(self.process_waiter,(p, "cmd:{} pid:{}".format(     j['cmd'],p.pid)))
+                print('Started process {}\n{}\n'.format(p.pid,borderstr))                
+                count+=1
+                
+                #FR
+                thread.start_new_thread(self.process_waiter,(p,))
                 
                 j['status'] = 'R' 
                 self._running.append((p, j))
@@ -275,8 +293,9 @@ class InteractiveHost(Host):
                                 
         self.wait(0)
 
+
     #FR
-    def process_waiter(self,popen, description):
+    def process_waiter(self,popen):
         #http://stackoverflow.com/questions/100624
         t_start=time.clock()
         t_end=t_start
@@ -289,7 +308,7 @@ class InteractiveHost(Host):
                 if p.pid == w[0]:
                     self._running.remove((p, j))
                     if w[1]>0:
-                        self.handle_error(w[1], j)
+                        self.handle_error(w[1], j,p.pid)
                         j['status'] = 'X'
                     else:
                         j['status'] = 'F'
@@ -304,18 +323,19 @@ class InteractiveHost(Host):
                     
                     break
         
-    def handle_error(self, stat, j):
+    def handle_error(self, stat, j,pid=-1):
         #stat = os.WEXITSTATUS(stat) #FR
-        print 40*'*'
-        print "ERROR: %s returned %s" % (j['cmd'], stat)
+        str=40*'*' + '\n'
+        str+="ERROR (pid {}): {} returned {}\n".format(pid,j['cmd'], stat)
         try:
             for line in open(j['outfile']+'.err', 'r'):
                 if not re.match("HDF5:{'name':'time','value':([0-9.]+)", line):
-                    print line,
+                    str+=line
         except:
             pass
-        print "Stdout is in %s.out and stderr is in %s.err." % (j['outfile'], j['outfile'])
-        print 40*'*'
+        str+="Stdout is in {}.out and stderr is in {}.err.\n".format(j['outfile'], j['outfile'])
+        str+=40*'*' + '\n'
+        print(str)
     
     #FR
     def wait(self,cpus):
@@ -326,6 +346,8 @@ class InteractiveHost(Host):
 
 class TestHost(Host):
     def __init__(self, cpus=0, cpus_per_node=0, walltime='1:00:00', pack=1):
+        raise Exception("This host is not supported")
+        
         Host.__init__(self)
         if cpus <= 0:
             print "You must specify cpus when creating a PBSHost object."

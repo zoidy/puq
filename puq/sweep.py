@@ -106,13 +106,9 @@ class Sweep(object):
             h5.close()
 
     #FR
-    def _save_only(self):
+    def _save_and_run(self,dryrun=False):
         self._save_hdf5()
-        return True
-        
-    def _save_and_run(self):
-        self._save_hdf5()
-        res = self.host.run()
+        res = self.host.run(dryrun)
         if res:
             self._save_hdf5()
         return res

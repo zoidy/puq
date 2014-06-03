@@ -120,12 +120,14 @@ def load_internal(name):
     return sw
 
 def start(*args):
-    usage = """Usage: puq start [-f file.hdf5] script.py [args].
+    usage = """Usage: puq start [-d] [-f file.hdf5] script.py [args].
     where 'script' is a PUQ control script and
     'args' are optional arguments passed to run() in the control script."""
     parser = OptionParser(usage)
     parser.add_option("-f", type='string',
         help="Output filename. '.hdf5' will be appended if necessary. Default is 'sweep_' followed by a timestamp.")
+    parser.add_option("-d", action="store_true",default=False, dest="dryrun",
+        help="If set, conducts a dry run files are written but model is not executed")        
     (opt, ar) = parser.parse_args(args=list(args))
 
     if len(ar) == 0:
@@ -150,7 +152,7 @@ def start(*args):
         scriptname += ".py"
     sw.input_script = os.path.abspath(scriptname)
 
-    res = sw.run(opt.f)
+    res = sw.run(opt.f,dryrun=opt.dryrun)
     if res:
         sw.analyze()
     return res

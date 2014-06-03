@@ -171,3 +171,25 @@ def get_response(hf, var):
     """
     psweep = hf.attrs['UQtype']
     return unpickle(hf['/%s/%s/response' % (psweep, var)].value)
+    
+@hdf5_wrap
+def get_sensitivity(hf, var):
+    """get_sensitivity(hf, var).
+
+    Returns the sensitivity indices for var in a dictionary with keys equal to 
+    parameter names and values consisting of dictionaries with keys equal to sensitivity indices.
+
+    The keys in the sub dictionaries will vary depending on the type of sensitivity analysis 
+    (Smolyak or Morris) but will contain at least 'ustar' and 'std'. Morris also contains 'u' and
+    'ustar_conf95'
+    Args:
+      hf: An open HDF5 filehandle or a string containing the HDF5
+        filename to use.
+      var: Output variable name.
+    """
+    psweep = hf.attrs['UQtype']
+    if not '/%s/%s/sensitivity' % (psweep, var) in hf:
+        print("Sensitivity indices weren't compute for output '{}'".format(var))
+        raise ValueError
+        
+    return unpickle(hf['/%s/%s/sensitivity' % (psweep, var)].value)

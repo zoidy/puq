@@ -27,29 +27,27 @@ class PSweep(object):
 
         Returns True on success.
         """
-        if dryrun:#FR
-            return sweep._save_only() #FR
-        else:
-            while True:
-                sweep.host.add_jobs(sweep.fname, self.get_args())
-                ok = sweep._save_and_run()
-                if not ok:
-                    return False
 
+        while True:
+            sweep.host.add_jobs(sweep.fname, self.get_args())
+            ok = sweep._save_and_run(dryrun)
+            if not ok:
+                return False
+
+            hf = h5py.File(sweep.fname + '.hdf5')
+            sweep.collect_data(hf)
+            sweep.psweep.analyze(hf)
+            hf.close()
+
+            if self.iteration_cb is not None:
                 hf = h5py.File(sweep.fname + '.hdf5')
-                sweep.collect_data(hf)
-                sweep.psweep.analyze(hf)
-                hf.close()
-
-                if self.iteration_cb is not None:
-                    hf = h5py.File(sweep.fname + '.hdf5')
-                    if self.iteration_cb(sweep, hf):
-                        hf.close()
-                        sweep._save_hdf5()
-                        return True
+                if self.iteration_cb(sweep, hf):
                     hf.close()
-                else:
+                    sweep._save_hdf5()
                     return True
+                hf.close()
+            else:
+                return True
 
 class APSweep(object):
     """
