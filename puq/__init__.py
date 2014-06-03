@@ -2,6 +2,7 @@ from hosts import InteractiveHost
 from submithost import SubmitHost
 from montecarlo import MonteCarlo
 from lhs import LHS
+from morris import Morris
 from options import options
 from parameter import Parameter, NormalParameter, WeibullParameter, RayleighParameter, ExponParameter, CustomParameter, UniformParameter, DParameter
 from smolyak import Smolyak
