@@ -630,7 +630,7 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
                  2*IQR/n^(1/3) where IQR is the interquartile range
                  of the data.
     :type nbins: int
-    :param fit: Use Gaussian KDE (default=False)
+    :param fit: Use Gaussian KDE (default=False -- linear interpolation)
     :type fit: True or "Gaussian"
     :param bw: Bandwidth for Gaussian KDE (default=None)
     :type bw: string or float. String must be 'scott' or 'silverman'

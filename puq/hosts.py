@@ -39,9 +39,14 @@ class Host(object):
 
     def add_jobs(self, fname, args):
         self.fname = fname
+        
+        #a is a generator object. each element is a 
+        #realization of the parameters (a list of tuples). On every loop
+        #iteration, a new realiztion is returned
+        #Called from psweep.run
         for a in args:
             output = '%s_%s' % (fname, self.run_num)
-            cmd = self.prog.cmd(a)
+            cmd = self.prog.cmd(a) #prog is the testprogram. initialized from sweep.py
             _dir = self.prog.setup(output)
             self.add_job(cmd, _dir, 0, output)
             self.run_num += 1

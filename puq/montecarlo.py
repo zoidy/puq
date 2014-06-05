@@ -34,6 +34,9 @@ class MonteCarlo(PSweep):
 
     # Returns a list of name,value tuples
     # For example, [('t', 1.0), ('freq', 133862.0)]
+    # This is one realization of the parameters. Since this function
+    # returns a generator which can be iterated like a list,
+    # yielding an iterable list of lists of tuples.
     def get_args(self):
         for i in xrange(self._start_at, self.num):
             yield [(p.name, p.values[i]) for p in self.params]
