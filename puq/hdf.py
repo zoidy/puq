@@ -181,7 +181,8 @@ def get_sensitivity(hf, var):
 
     The keys in the sub dictionaries will vary depending on the type of sensitivity analysis 
     (Smolyak or Morris) but will contain at least 'ustar' and 'std'. Morris also contains 'u' and
-    'ustar_conf95'
+    'ustar_conf95'.
+    
     Args:
       hf: An open HDF5 filehandle or a string containing the HDF5
         filename to use.

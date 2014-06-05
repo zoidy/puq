@@ -210,10 +210,13 @@ class Sweep(object):
 
     def analyze(self, verbose=False):
         """
-        Collects the output from all the jobs into an HDF5 file.
+        If not done already, collects the output from all the jobs into an HDF5 file.
         Parses any tagged data in the output and puts it in
-        the /data group in the HDF5 file.
+        the output/data group in the HDF5 file.
+        
+        This function is called from the puq command line interface script automatically.
         """
+        
         debug('')
         hf = h5py.File(self.fname + '.hdf5')
         if not self.host.status(quiet=1)[1]:
