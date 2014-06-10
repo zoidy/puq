@@ -44,6 +44,9 @@ class Smolyak(PSweep):
         self.pgrid = self.grid.copy()
 
         for i, p in enumerate(self.params):
+            if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                print("Warning: ignoring option 'use_samples_val' for {}".format(p.name))
+                
             pmin, pmax = p.pdf.srange
             self.pgrid[:, i] *= (pmax - pmin) / 2.0
             self.pgrid[:, i] += (pmax + pmin) / 2.0

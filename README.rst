@@ -22,6 +22,11 @@ In addition to running on Windows, this version of puq adds the following functi
 
 - Ability to conduct sensitivity analysis using the Morris method (requires 
   `my version <https://github.com/zoidy/SALib>`_  of the SALib library)
+- Ability to pass parameters to the test program by file instead of passing them all on the
+  command line
+- Ability to exactly specify the values to be used when conducting an analysis, instead of 
+  having puq sample the PDF. This is useful in cases when the samples of the parameter are
+  generated externally.  
 - Ability to conduct a dry run (all steps of the run are shown, including the command lines to 
   be executed, except the actual model is not run.) In order to have a complete output file, a dummy
   output value is used.

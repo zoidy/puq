@@ -7,7 +7,7 @@ See LICENSE file for terms.
 """
 
 #import sys, termios, tty, os, h5py #FR
-import sys, os, h5py #FR
+import sys, os, h5py,traceback #FR
 import numpy as np
 from logging import info, debug, exception, warning, critical
 from puq.options import options
@@ -74,29 +74,33 @@ def getachar(prompt, echo=True):
 def process_data(hf, grpname, callback):
     debug(grpname)
     grp = hf.require_group(grpname)
-    for var in hf['output/data']:
-        debug("VAR=%s" % var)
-        # get the variable
-        d = hf['output/data/%s' % var]
-        try:
-            vdesc = d.attrs['description']
-        except:
-            vdesc = var
-
-        # create HDF5 group for it
-        if var in grp:
-            del grp[var]
-        vgrp = grp.require_group(var)
-        vgrp.attrs['description'] = str(vdesc)
-
-        vprint(1, "\nProcessing %s" % d)
-        d = get_result(hf, var)
-        vlist = callback(vgrp, d)
-        for v in vlist:
+    try:
+        for var in hf['output/data']:
+            debug("VAR=%s" % var)
+            # get the variable
+            d = hf['output/data/%s' % var]
             try:
-                vgrp[v[0]] = v[1]
-            except TypeError:
-                vgrp[v[0]] = repr(v[1])
+                vdesc = d.attrs['description']
+            except:
+                vdesc = var
+
+            # create HDF5 group for it
+            if var in grp:
+                del grp[var]
+            vgrp = grp.require_group(var)
+            vgrp.attrs['description'] = str(vdesc)
+
+            vprint(1, "\nProcessing %s" % d)
+            d = get_result(hf, var)
+            vlist = callback(vgrp, d)
+            for v in vlist:
+                try:
+                    vgrp[v[0]] = v[1]
+                except TypeError:
+                    vgrp[v[0]] = repr(v[1])
+    except Exception,e:
+        print("error processing data (maybe all runs failed?): " + str(e))
+        #traceback.print_exc()
 
 def strip(fname):
     tmpname = fname + '_strip'

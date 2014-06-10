@@ -3,7 +3,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import os, shutil
+import os, shutil,optparse,shlex
 
 class TestProgram(object):
     """
@@ -25,6 +25,10 @@ class TestProgram(object):
       outfiles(list): An optional list of files that will be saved
         into the HDF5 file upon completion. The files will be in
         /output/jobs/n where 'n' is the job number.
+      paramsByFile(boolean): If True, passes parameters to the TestProgram
+        via a file rather than on the command line. The file name is 
+        specified via - -paramsFile=xxx in the exe string.
+        This option must be used with newdir=True. See Example 3.
 
     Example1::
 
@@ -47,10 +51,26 @@ class TestProgram(object):
       prog = TestProgram('PM2', newdir=True, desc='MPM Scaling',
         infiles=['pm2geometry', 'pm2input', 'pmgrid_geom.nc',
         'pmpart_geom.nc'])
+        
+    Example3::
+
+      # Using newdir and paramsByFile
+      # In this case, all parameters to rosen_prog.py located in the same directory
+      # as the control script will be passed in the file named input_params.txt
+      # located in a subdirectory of the control script's directory and contains
+      # two columns, separated by whitespace. The first column is the parameter name
+      # and the second is the parameter value.
+      #
+      # Note: the contents of input_params.txt can be loaded using numpy's loadtxt
+      # with record-data type.
+
+      prog = TestProgram(exe='python ../rosen_prog.py --paramsFile=input_params.txt',
+        newdir=True, desc='Rosenbrock Function')
 
     """
 
-    def __init__(self, name='', exe='', newdir=False, infiles='', desc='', outfiles=''):
+    def __init__(self, name='', exe='', newdir=False, infiles='', desc='', outfiles='',
+                    paramsByFile=False):
         self.name = name
         self.newdir = newdir
         self.infiles = infiles
@@ -59,6 +79,10 @@ class TestProgram(object):
         if self.name == '' and self.exe == '':
             raise ValueError("name or exe must be set.")
         self.desc = desc
+        
+        if paramsByFile and not newdir:
+            raise ValueError("newdir must be set if paramsByFile is used")
+        self.paramsByFile=paramsByFile
 
     def setup(self, dirname):
         if self.newdir:
@@ -86,3 +110,31 @@ class TestProgram(object):
             t = Template(exe)
             exe = t.substitute(dict(args))
         return exe
+     
+    def cmdByFile(self,args,directory):
+        #builds a command for the host to execute where the
+        #parameters are passed in a file instead of the command line.
+        #The relative path and name of the file are passed on the command line
+        #by the job runner,
+        #using the special command line argument '--paramsFile'
+        #which is a reserved name (see check_name in parameter.py).
+        
+        #args is a list of tuples and comes from psweep.get_args via 
+        #hosts.add_jobs and psweep.run        
+        if "--paramsFile" not in self.exe:
+            raise Exception("paramsByFile=True specified in TestProgram constructor but '--paramsFile' argument not set in the exe argument of the constructor")
+            
+        parser=optparse.OptionParser()
+        parser.add_option("--paramsFile", action="store",type="string")
+        (options, p_args) = parser.parse_args(shlex.split(self.exe))
+        if options.paramsFile==None:
+            raise Exception("'--paramsFile' was specified but no file name given!")
+                
+        #build the output file
+        fname=os.path.join(directory,options.paramsFile)
+        f=open(fname,'w')
+        for p,v in args:
+            f.write("{}\t\t\t{}\n".format(p,v))
+        f.close()
+        
+        return self.exe

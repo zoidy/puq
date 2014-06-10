@@ -46,8 +46,13 @@ class Host(object):
         #Called from psweep.run
         for a in args:
             output = '%s_%s' % (fname, self.run_num)
-            cmd = self.prog.cmd(a) #prog is the testprogram. initialized from sweep.py
             _dir = self.prog.setup(output)
+
+            if self.prog.paramsByFile:
+                cmd=self.prog.cmdByFile(a,_dir)
+            else:
+                cmd = self.prog.cmd(a) #prog is the testprogram. initialized from sweep.py
+            
             self.add_job(cmd, _dir, 0, output)
             self.run_num += 1
 
@@ -278,8 +283,11 @@ class InteractiveHost(Host):
                 if dryrun:
                     cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
                 
-                cmd+= ' && echo. && echo {} && echo {} && echo {}'.format(jobstr,cpustr,cmd)
-                
+                #include echoing commands so that the info is saved in the hdf5 file.
+                #escape the ampersands for windows
+                cmd2=cmd.replace('&','^&')
+                cmd='echo {} && echo {} && echo {} && {}'.format(jobstr,cpustr,cmd2,cmd)
+                                
                 # We are going to wait for each process, so we must keep the Popen object
                 # around, otherwise it will quietly wait for the process and exit,
                 # leaving our wait function waiting for nonexistent processes.               
@@ -320,7 +328,7 @@ class InteractiveHost(Host):
                     self._cpus_free += j['cpu']
                     
                     #substitute the time command in Host __init__
-                    f=open(j['outfile']+'.err','w')
+                    f=open(j['outfile']+'.err','a')
                     f.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(
                         t_end-t_start))
                     f.close()

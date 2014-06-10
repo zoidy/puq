@@ -126,6 +126,8 @@ class Sweep(object):
             followed by a timestamp.
           overwrite(boolean): If True and fn is not None, will
             silently overwrite any previous files of the same name.
+          dryrun(boolean): Simulates what would happen if UQ is run, without
+            actually running the TestProgram.
         Returns:
           True on success.
         """

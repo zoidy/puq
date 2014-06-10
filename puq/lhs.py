@@ -38,6 +38,9 @@ class LHS(PSweep):
         self._start_at = 0
 
         if self.response:
+            if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                print("Warning: ignoring option 'use_samples_val' for {}".format(p.name))
+                
             # To generate a complete response surface, use Uniform distributions
             # with the same range as the original distributions.
             for p in self.params:
@@ -47,10 +50,14 @@ class LHS(PSweep):
                     p.values = UniformPDF(*p.pdf.range).lhs(num)
         else:
             for p in self.params:
-                if ds:
-                    p.values = p.pdf.ds(num)
+                if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                    if np.size(p.values!=num):
+                        raise Exception("Expected {} samples for parameter {}, found {}".format(num,p.name,np.size(p.values)))
                 else:
-                    p.values = p.pdf.lhs(num)
+                    if ds:
+                        p.values = p.pdf.ds(num)
+                    else:
+                        p.values = p.pdf.lhs(num)
 
     # Returns a list of name,value tuples
     # For example, [('t', 1.0), ('freq', 133862.0)]

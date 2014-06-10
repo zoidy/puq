@@ -22,6 +22,7 @@ def get_psamples(params, psamples=None, num=None):
 
     use_samples = False
     for p in params:
+        #check if parameter p has an attribute use_samples and its set to true
         if hasattr(p, 'use_samples') and p.use_samples:
             use_len = len(p.pdf.data)
             use_samples = True
@@ -104,6 +105,9 @@ class Parameter(object):
         debug(args)
 
     def check_name(self, name):
+        if name=="paramsFile":
+            print('The name "paramsFile" is reserved')
+            sys.exit(0)
         try:
             e = sympy.S(name)
             assert str(e.evalf()) == name
@@ -279,20 +283,45 @@ class CustomParameter(Parameter):
       description:  A longer description of the parameter.
       kwargs: Keyword args.  Valid args are:
 
-        ============ ===============================================
-        Arg          Description
-        ============ ===============================================
-        pdf          :class:`PDF`
-        use_samples  Use data samples attached to pdf (if available)
-        ============ ===============================================
+        ================== =========================================================
+        Arg                Description
+        ================== =========================================================
+        pdf                :class:`PDF` or numpy array of samples
+        use_samples        When using a response surface (RS) to conduct UQ,
+                           Use data samples (if available) attached to pdf, as
+                           sample points on the RS.
+                           For constructing the RS, samples will be fit using 
+                           a Gaussian kernel with puq sampling from the fitted
+                           PDF. The fitted pdf can be accessed via
+                           the pdf attribute of this class.
+        use_samples_val    if True, the samples attached to pdf will be directly
+                           used when running
+                           a UQ method (Monte Carlo, LHS only) instead of 
+                           sampling a PDF fitted from the samples.
+                           This makes it easier to run puq with correlated 
+                           variables but care must be taken to ensure that
+                           the samples correspond to the UQ method. E.g., if
+                           the UQ method is LHS, the samples must have been
+                           previously generated via an LHS algorithm. Also the
+                           number of samples must equal the number of
+                           runs for the UQ method.
+                           If creating a response surface, setting this to True
+                           has no effect.
+                           
+                           The samples of the pdf are obtained from the 'pdf' arg
+                           ('data' attribute of the ExperimentalPDF object or the
+                           array values).
+        ================== =========================================================
     '''
     def __init__(self, name, description, **kwargs):
         #Parameter.__init__(self, args)
         self.name = self.check_name(name)
         self.description = description
         self.use_samples = kwargs.get('use_samples')
+        self.use_samples_val = kwargs.get('use_samples_val')
         self.pdf = kwargs.get('pdf')
         self.caldata = kwargs.get('caldata')
+        self.values=None
 
         if self.pdf is None and self.caldata is None:
             self.usage(0)
@@ -311,15 +340,24 @@ class CustomParameter(Parameter):
                 self.pdf = ExperimentalPDF(fit=1, data=d)
             elif isinstance(self.caldata, PDF):
                 self.pdf = self.caldata
-
+        
         # if pdf was an array or list of PDFs, fix it
         if isinstance(self.pdf, np.ndarray):
+            #the pdf will be fit using a gaussian kernel.
             self.pdf = ExperimentalPDF(self.pdf, fit=1)
         elif isinstance(self.pdf, list):
             # A list of PDFs.  Sample from all of them to produce a PDF
             d = np.array([x.ds(200) for x in self.pdf]).flatten()
-            self.pdf = ExperimentalPDF(fit=1, data=d)
+            self.pdf = ExperimentalPDF(fit=1, data=d)            
 
+        #store the values used to generate the pdf as the sample values of this parameter
+        #self.values is a 1D array
+        if self.use_samples_val:
+            if isinstance(self.pdf, ExperimentalPDF):
+                self.values=self.pdf.data
+            else:
+                raise ValueError("'use_samples_val' was specified but 'pdf' was not an ExperimentalPDF object")
+            
     def usage(self, msg):
         if msg == 0:
             raise ValueError("Error: You must specify a pdf, data, or caldata.")

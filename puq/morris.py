@@ -23,16 +23,6 @@ class Morris(PSweep):
             print('Morris method does not support creating response surfaces')
             raise ValueError
         
-        #compare the state of the seeds to the ones set in the control script
-        a=pickle(random.getstate())
-        b=pickle(np.random.get_state())
-        f=open('random.getstate.2.txt','w')
-        f.write(a)
-        f.close()
-        f=open('np.random.get_state.2.txt','w')
-        f.write(b)
-        f.close()
-        
         #output of puq run is 1 elementary effect for each parameter per trajectory.
         #Therefore, each parameter will have *numtrajectories* elementary effects.
         
@@ -67,16 +57,16 @@ class Morris(PSweep):
             p.values = p.pdf.ppf(self._samples[:,i])          
             i+=1
             f.write('{}\t{}\t{}\n'.format(p.name,p.pdf.range[0],p.pdf.range[1]))
+            
+            if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                print("Warning: ignoring option 'use_samples_val' for {}".format(p.name))
+                
         f.close()
-        
-        #save the samples, as constructed by SALib for verification later.
-        # --removed. save the file directly instead since it was verified
-        #   that puq evaluates the output in the order specified in p.values for each param.
-        #np.savetxt(self._salib_realizationsFile_verify,self._samples)
-        
-        np.savetxt(self._salib_realizationsFile,self._samples)
-           
 
+        #save the samples, as constructed by SALib
+        np.savetxt(self._salib_realizationsFile,self._samples)        
+        
+        
     # Returns a list of name,value tuples
     # For example, [('t', 1.0), ('freq', 133862.0)]
     def get_args(self):
@@ -98,35 +88,26 @@ class Morris(PSweep):
             #analyze results
             ############
             
-            #get the inputs
-            inputs=hf['/input/params']
-            numparams=len(inputs)
-            
             #N(D+1) x D            
-            # realizations=np.empty((np.size(data,0),numparams ))
-                        
-            # f=open(self._salib_paramFile,'w')
-            # i=0
-            # for p in inputs:
-                # aParam=unpickle(hf['/input/params'][p].value) 
-                # print(aParam.name)
-                # #we now have a parameter
-                # f.write('{}\t{}\t{}\n'.format(aParam.name,aParam.pdf.range[0],aParam.pdf.range[1]))
-                
-                # # get the values
-                # realizations[:,i]=aParam.values
-                # i+=1
-                
-            # f.close()
+            realizations=np.empty((np.size(data,0),len(self.params)))
             
+            #retrieve the paramter samples in the same order as given to SALib
+            i=0
+            for p in self.params:
+                aParam=unpickle(hf['/input/params'][p.name].value) 
+                
+                # get the values
+                realizations[:,i]=aParam.values
+                i+=1
+ 
             #check to make sure the order in which the parameters were initially sampled by SALib
             #was the order in which they were actually sampled by puq
-            # np.savetxt(self._salib_realizationsFile,realizations)
-            # if os.path.getsize(self._salib_realizationsFile_verify) == os.path.getsize(self._salib_realizationsFile):                
-                # if not filecmp.cmp(self._salib_realizationsFile_verify, self._salib_realizationsFile, shallow=False):
-                    # raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
-            # else:
-                # raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
+            np.savetxt(self._salib_realizationsFile_verify,realizations)
+            if os.path.getsize(self._salib_realizationsFile_verify) == os.path.getsize(self._salib_realizationsFile):                
+                if not filecmp.cmp(self._salib_realizationsFile_verify, self._salib_realizationsFile, shallow=False):
+                    raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
+            else:
+                raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
             
             #get the outputs
             outputs=hf['/output/data']
@@ -147,8 +128,13 @@ class Morris(PSweep):
             
             sorted_list = sorted(sens.items(), lambda x, y: cmp(y[1]['ustar'], x[1]['ustar']))                
             
-            
-            #os.remove(salib_paramFile)
+            try:
+                os.remove(self._salib_paramFile)
+                os.remove(self._salib_realizationsFile)
+                os.remove(self._salib_realizationsFile_verify)
+                os.remove(self._salib_analysisFile)
+            except Exception,e:
+                print("error deleting SALib temp files. " + str(e))
             
             return [('pdf', pickle(pdf)), ('samples', data), ('mean', mean), ('dev', dev),
                     ('sensitivity',pickle(sorted_list))]
