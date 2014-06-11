@@ -10,4 +10,7 @@ PSweep Reference
 
 .. autoclass:: Smolyak
    :members: __init__
+   
+.. autoclass:: SimpleSweep
+    :members: __init__
 

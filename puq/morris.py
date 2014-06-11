@@ -71,7 +71,7 @@ class Morris(PSweep):
     # For example, [('t', 1.0), ('freq', 133862.0)]
     def get_args(self):
         for i in xrange(self._start_at, self.num):
-            yield [(p.name, p.values[i]) for p in self.params]
+            yield [(p.name, p.values[i],p.description) for p in self.params]
 
     def _do_pdf(self, hf, data):
         if self.response:

@@ -15,6 +15,16 @@ from puq.jpickle import pickle
 from puq.pdf import UniformPDF, ExperimentalPDF
 
 class MonteCarlo(PSweep):
+    """
+    Class implementing Monte Carlo sampling.
+
+    Args:
+      params: Input list of :class:`Parameter`\s.
+      num: Number of samples to use.
+      response(boolean): Generate a response surface using the sample
+        points.
+      iteration_cb(function): A function to call after completion.
+    """
     def __init__(self, params, num, response=True, iteration_cb=None):
         PSweep.__init__(self, iteration_cb)
         self.params = params
@@ -51,7 +61,7 @@ class MonteCarlo(PSweep):
     # yielding an iterable list of lists of tuples.
     def get_args(self):
         for i in xrange(self._start_at, self.num):
-            yield [(p.name, p.values[i]) for p in self.params]
+            yield [(p.name, p.values[i],p.description) for p in self.params]
 
     def _do_pdf(self, hf, data):
         if self.response:

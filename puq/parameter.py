@@ -283,35 +283,44 @@ class CustomParameter(Parameter):
       description:  A longer description of the parameter.
       kwargs: Keyword args.  Valid args are:
 
-        ================== =========================================================
+        ================== ================================================================
         Arg                Description
-        ================== =========================================================
+        ================== ================================================================
         pdf                :class:`PDF` or numpy array of samples
         use_samples        When using a response surface (RS) to conduct UQ,
                            Use data samples (if available) attached to pdf, as
                            sample points on the RS.
-                           For constructing the RS, samples will be fit using 
-                           a Gaussian kernel with puq sampling from the fitted
+                           For constructing the RS, the samples are fitted using 
+                           a Gaussian kernel. Puq then samples from the fitted
                            PDF. The fitted pdf can be accessed via
                            the pdf attribute of this class.
-        use_samples_val    if True, the samples attached to pdf will be directly
-                           used when running
-                           a UQ method (Monte Carlo, LHS only) instead of 
-                           sampling a PDF fitted from the samples.
-                           This makes it easier to run puq with correlated 
-                           variables but care must be taken to ensure that
+        use_samples_val    if True, *pdf* must be an ExperimentalPDF object and the
+                           samples attached to it will be used directly when running
+                           a UQ method (Monte Carlo, LHS, SimpleSweep only) instead of 
+                           sampling a fitted PDF.
+                           
+                           Notes:
+                           
+                           Care must be taken to ensure that
                            the samples correspond to the UQ method. E.g., if
                            the UQ method is LHS, the samples must have been
-                           previously generated via an LHS algorithm. Also the
+                           previously generated via an LHS algorithm.
+                           
+                           Also the
                            number of samples must equal the number of
                            runs for the UQ method.
-                           If creating a response surface, setting this to True
-                           has no effect.
                            
-                           The samples of the pdf are obtained from the 'pdf' arg
-                           ('data' attribute of the ExperimentalPDF object or the
+                           If creating a response surface, setting use_samples_val to 
+                           True has no effect.
+                           
+                           if the *pdf* argument is a PDF object instead of an array,
+                           the samples of this CustomParameter are obtained from the
+                           'data' attribute of the ExperimentalPDF object or the
                            array values).
-        ================== =========================================================
+                           
+                           If all parameters in an analysis have the use_samples_val 
+                           flag set, it is equivalent to running a :class:`SimpleSweep`
+        ================== ================================================================
     '''
     def __init__(self, name, description, **kwargs):
         #Parameter.__init__(self, args)

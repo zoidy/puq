@@ -16,6 +16,19 @@ from puq.jpickle import pickle
 from response import SampledFunc
 
 class SimpleSweep(PSweep):
+    """
+    Class implementing a simple sweep.
+    
+    This sweep does evaluations at the given points.
+
+    Args:
+      params: Input list of :class:`Parameter`\s.
+      valarray: A 2D array with rows = number of params and columns = parameter values.
+        If *valarray* is set, it is used instead of .values attribute of each parameter.
+      response(boolean): Generate a response surface using the sample
+        points.
+      iteration_cb(function): A function to call after completion.
+    """
     def __init__(self, params, valarray=None, response=False, iteration_cb=None):
         PSweep.__init__(self, iteration_cb)
         self.response = response
@@ -46,7 +59,7 @@ class SimpleSweep(PSweep):
     # For example, [('t', 1.0), ('freq', 133862.0)]
     def get_args(self):
         for i in xrange(self._start_at, self.num):
-            yield [(p.name, p.values[i]) for p in self.params]
+            yield [(p.name, p.values[i],p.description) for p in self.params]
 
     def _do_pdf(self, hf, data):
         mean = np.mean(data)
@@ -67,6 +80,9 @@ class SimpleSweep(PSweep):
         process_data(hf, 'simplesweep', self._do_pdf)
 
     def extend(self, valarray):
+        if not isinstance(valarray, np.ndarray) or valarray.shape[0] != len(params):
+                raise ValueError('Valarray needs to be a 2D array with rows = number of params.')
+                
         for i, p in enumerate(self.params):
             p.values = np.concatenate((p.values, valarray[i]))
         self._start_at = self.num

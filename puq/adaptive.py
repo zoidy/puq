@@ -104,7 +104,7 @@ class AdapStocColl(APSweep):
             except AttributeError:
                 p.values = [pcol]
         for row in plist:
-            yield zip([p.name for p in self.params], row)
+            yield zip([p.name for p in self.params], row,[p.description for p in self.params])
 
 
     def analyze(self, hf):

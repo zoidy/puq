@@ -118,8 +118,8 @@ class APSweep(object):
     def _run(self, sweep):
         plist = []
         plist_full = []
-        for args in self.get_args():
-            args = tuple(args)
+        for p,v,d in self.get_args():
+            args = (p,v)
             plist_full.append(args)
             if not args in self.cache:
                 plist.append(args)

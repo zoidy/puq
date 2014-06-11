@@ -63,7 +63,7 @@ class Smolyak(PSweep):
     # For example, [('t', 1.0), ('freq', 133862.0)]
     def get_args(self):
         for row in self.pgrid:
-            yield zip([p.name for p in self.params], row[:-1])
+            yield zip([p.name for p in self.params], row[:-1],[p.description for p in self.params])
 
     def _do_rs(self, hf, data):
         rs = self._uhat(data)

@@ -95,6 +95,7 @@ class TestProgram(object):
             return ''
 
     def cmd(self, args):
+        args=[(p,v) for p,v,d in args]
         if not self.exe:
             arglist = ' '.join(['--%s=%s' % (p, v) for p, v in args])
             return '%s %s' % (self.name, arglist)
@@ -133,8 +134,8 @@ class TestProgram(object):
         #build the output file
         fname=os.path.join(directory,options.paramsFile)
         f=open(fname,'w')
-        for p,v in args:
-            f.write("{}\t\t\t{}\n".format(p,v))
+        for p,v,d in args:
+            f.write("{}\t\t\t{}\t{}\n".format(p,v,d))
         f.close()
         
         return self.exe
