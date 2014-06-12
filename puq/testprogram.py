@@ -149,7 +149,7 @@ class TestProgram(object):
         fname=os.path.join(directory,options.paramsFile)
         f=open(fname,'w')
         for p,v,d in args:
-            f.write("{}\t\t\t{}\t\t\t\t\t{}\n".format(p,v,d))
+            f.write("{}\t\t\t{:.9e}\t\t\t{}\n".format(p,v,d))
         f.close()
         
         return self.exe

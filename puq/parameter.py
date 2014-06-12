@@ -295,16 +295,16 @@ class CustomParameter(Parameter):
                            PDF. The fitted pdf can be accessed via
                            the pdf attribute of this class.
         use_samples_val    if True, the samples provided in *pdf*
-                           will be used directly when running
+                           will be used as the parameter values when running
                            a UQ method (Monte Carlo, LHS, SimpleSweep only) instead of 
                            sampling the PDF fitted from the samples.
                            
                            Notes:
                            
                            If use_samples_val=True, *pdf* must be an ExperimentalPDF
-                           object or a 1D array of samples. If *pdf* is an ExperimentalPDF
-                           object, the samples of this CustomParameter are obtained from
-                           the 'data' attribute of the ExperimentalPDF object.
+                           or a 1D array of samples. If *pdf* is an ExperimentalPDF
+                           , the samples of this CustomParameter are obtained from
+                           the 'data' attribute of the pdf object.
                            
                            Care must be taken to ensure that
                            the samples correspond to the UQ method. E.g., if
@@ -324,12 +324,16 @@ class CustomParameter(Parameter):
     '''
     def __init__(self, name, description, **kwargs):
         #Parameter.__init__(self, args)
+        #:Parameter name (same as name from constructor
         self.name = self.check_name(name)
+        #:Parameter description (same as description from constructor)
         self.description = description
         self.use_samples = kwargs.get('use_samples')
         self.use_samples_val = kwargs.get('use_samples_val')
+        #:The :class:`PDF` associated with this parameter (same as the *pdf* kwarg from the constructor)
         self.pdf = kwargs.get('pdf')
         self.caldata = kwargs.get('caldata')
+        #:A 1D array of parameter values. These are the values used when evaluating the :class:`TestProgram`
         self.values=None
 
         if self.pdf is None and self.caldata is None:
@@ -362,10 +366,10 @@ class CustomParameter(Parameter):
         #store the values used to generate the pdf as the sample values of this parameter
         #self.values is a 1D array
         if self.use_samples_val:
-            if isinstance(self.pdf, ExperimentalPDF):
+            if isinstance(self.pdf,PDF) and hasattr(self.pdf,'data'):
                 self.values=self.pdf.data
             else:
-                raise ValueError("'use_samples_val' was specified but 'pdf' was not an ExperimentalPDF object")
+                raise ValueError("'use_samples_val' was specified but 'pdf' was not an ExperimentalPDF")
             
     def usage(self, msg):
         if msg == 0:
