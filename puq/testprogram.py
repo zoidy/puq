@@ -56,10 +56,24 @@ class TestProgram(object):
 
       # Using newdir and paramsByFile
       # In this case, all parameters to rosen_prog.py located in the same directory
-      # as the control script will be passed in the file named input_params.txt
-      # located in a subdirectory of the control script's directory and contains
-      # two columns, separated by whitespace. The first column is the parameter name
-      # and the second is the parameter value.
+      # as this script will be passed in the file named input_params.txt
+      # located in a subdirectory of the control script's directory. Ie., for the
+      # example below, the file structure is the following (assuming this script
+      # is named rosen.py contained in a directory called Rosen)
+      # Rosen
+      #   |_ rosen.py
+      #   |_ rosen_prog.py
+      #   |_ Run 1
+      #       |__ input_params.txt
+      #   |_ Run 2
+      #       |__ input_params.txt
+      #      .
+      #      .
+      #      .
+      # 
+      # input_params.txt contains 3 columns, separated by whitespace.
+      # The first column is the parameter name, the second is the parameter value, 
+      # the third is the parameter description.
       #
       # Note: the contents of input_params.txt can be loaded using numpy's loadtxt
       # with record-data type.
@@ -135,7 +149,7 @@ class TestProgram(object):
         fname=os.path.join(directory,options.paramsFile)
         f=open(fname,'w')
         for p,v,d in args:
-            f.write("{}\t\t\t{}\t{}\n".format(p,v,d))
+            f.write("{}\t\t\t{}\t\t\t\t\t{}\n".format(p,v,d))
         f.close()
         
         return self.exe
