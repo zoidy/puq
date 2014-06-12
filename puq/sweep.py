@@ -182,7 +182,7 @@ class Sweep(object):
 
         if not has_data and not self._reinit:
             print "WARNING: There is no data in the output section!"
-            print "Check that your runs completed successfully."
+            print "--Check that your runs completed successfully."
             return False
         return params, data
 
@@ -229,8 +229,10 @@ class Sweep(object):
         # collect the data if it has not already been collected.
         has_data = 'output' in hf and 'data' in hf['output']
         if not has_data:
-            self.collect_data(hf)
+            print('No data found. Attempting to collect data')
             try:
+                if not self.collect_data(hf):
+                    raise Exception()
                 self.psweep.analyze(hf)
             except:
                 print 'Warning: analysis failed.'
