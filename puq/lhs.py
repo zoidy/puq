@@ -53,6 +53,14 @@ class LHS(PSweep):
                 if hasattr(p, 'use_samples_val') and p.use_samples_val:
                     if np.size(p.values!=num):
                         raise Exception("Expected {} samples for parameter {}, found {}".format(num,p.name,np.size(p.values)))
+                    ok = 0
+                    try:
+                    # are all the value arrays the same length?
+                        ok = len(set([len(p.values) for p in params]))
+                    except:
+                        pass
+                    if ok != 1:
+                        raise ValueError('All parameters must have .values array of the same length')                        
                 else:
                     if ds:
                         p.values = p.pdf.ds(num)

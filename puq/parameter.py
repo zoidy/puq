@@ -294,12 +294,17 @@ class CustomParameter(Parameter):
                            a Gaussian kernel. Puq then samples from the fitted
                            PDF. The fitted pdf can be accessed via
                            the pdf attribute of this class.
-        use_samples_val    if True, *pdf* must be an ExperimentalPDF object and the
-                           samples attached to it will be used directly when running
+        use_samples_val    if True, the samples provided in *pdf*
+                           will be used directly when running
                            a UQ method (Monte Carlo, LHS, SimpleSweep only) instead of 
-                           sampling a fitted PDF.
+                           sampling the PDF fitted from the samples.
                            
                            Notes:
+                           
+                           If use_samples_val=True, *pdf* must be an ExperimentalPDF
+                           object or a 1D array of samples. If *pdf* is an ExperimentalPDF
+                           object, the samples of this CustomParameter are obtained from
+                           the 'data' attribute of the ExperimentalPDF object.
                            
                            Care must be taken to ensure that
                            the samples correspond to the UQ method. E.g., if
@@ -312,11 +317,6 @@ class CustomParameter(Parameter):
                            
                            If creating a response surface, setting use_samples_val to 
                            True has no effect.
-                           
-                           if the *pdf* argument is a PDF object instead of an array,
-                           the samples of this CustomParameter are obtained from the
-                           'data' attribute of the ExperimentalPDF object or the
-                           array values).
                            
                            If all parameters in an analysis have the use_samples_val 
                            flag set, it is equivalent to running a :class:`SimpleSweep`
