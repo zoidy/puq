@@ -102,12 +102,14 @@ class Morris(PSweep):
  
             #check to make sure the order in which the parameters were initially sampled by SALib
             #was the order in which they were actually sampled by puq
-            np.savetxt(self._salib_realizationsFile_verify,realizations)
-            if os.path.getsize(self._salib_realizationsFile_verify) == os.path.getsize(self._salib_realizationsFile):                
-                if not filecmp.cmp(self._salib_realizationsFile_verify, self._salib_realizationsFile, shallow=False):
-                    raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
-            else:
-                raise Exception('The order in which the parameter samples were constructed is different than the sampled order!')
+            #--NOT NEEDED ANYMORE. puq samples in the order given in p.values. Also, if 
+            #  params are not uniform distributions, this check will fail anyways.
+            # np.savetxt(self._salib_realizationsFile_verify,realizations)
+            # if os.path.getsize(self._salib_realizationsFile_verify) == os.path.getsize(self._salib_realizationsFile):                
+                # if not filecmp.cmp(self._salib_realizationsFile_verify, self._salib_realizationsFile, shallow=False):
+                    # print('Warning: The order in which the parameter samples were constructed is different than the sampled order!')
+            # else:
+                # print('Warning: The order in which the parameter samples were constructed is different than the sampled order!')
             
             #get the outputs
             outputs=hf['/output/data']
@@ -131,8 +133,8 @@ class Morris(PSweep):
             try:
                 os.remove(self._salib_paramFile)
                 os.remove(self._salib_realizationsFile)
-                os.remove(self._salib_realizationsFile_verify)
                 os.remove(self._salib_analysisFile)
+                #os.remove(self._salib_realizationsFile_verify)
             except Exception,e:
                 print("error deleting SALib temp files. " + str(e))
             
