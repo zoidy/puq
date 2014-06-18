@@ -3,7 +3,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import os, shutil,optparse,shlex
+import os, shutil,optparse,argparse,shlex
 
 class TestProgram(object):
     """
@@ -124,6 +124,7 @@ class TestProgram(object):
             from string import Template
             t = Template(exe)
             exe = t.substitute(dict(args))
+        print(exe)    
         return exe
      
     def cmdByFile(self,args,directory):
@@ -138,15 +139,16 @@ class TestProgram(object):
         #hosts.add_jobs and psweep.run        
         if "--paramsFile" not in self.exe:
             raise Exception("paramsByFile=True specified in TestProgram constructor but '--paramsFile' argument not set in the exe argument of the constructor")
-            
-        parser=optparse.OptionParser()
-        parser.add_option("--paramsFile", action="store",type="string")
-        (options, p_args) = parser.parse_args(shlex.split(self.exe))
-        if options.paramsFile==None:
+        
+        #use parse_known_args so we can call python with extra arguments if needed
+        parser=argparse.ArgumentParser()
+        parser.add_argument("--paramsFile", action="store",type=str)
+        parsedargs = parser.parse_known_args(shlex.split(self.exe))
+        if parsedargs[0].paramsFile==None:
             raise Exception("'--paramsFile' was specified but no file name given!")
                 
         #build the output file
-        fname=os.path.join(directory,options.paramsFile)
+        fname=os.path.join(directory,parsedargs[0].paramsFile)
         f=open(fname,'w')
         for p,v,d in args:
             f.write("{}\t\t\t{:.9e}\t\t\t{}\n".format(p,v,d))
