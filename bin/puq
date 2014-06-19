@@ -70,7 +70,7 @@ def open_hdf5_file(fname, mode='r'):
             usage()
         elif len(hdf5_files) != 1:
             print "ERROR: Multiple hdf5 files in current directory."
-            os.system("ls -lt *.hdf5")
+            os.system("dir *.hdf5")
             print "Which one do you want to use?\n"
             sys.exit(-1)
         filename = hdf5_files[0]
