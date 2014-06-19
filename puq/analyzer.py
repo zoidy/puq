@@ -720,7 +720,8 @@ class PdfFrame:
                 self.nbins = 50
             else:
                 self.nbins = int((np.max(self.data) - np.min(self.data)) / (2*iqr/len(self.data)**(1.0/3)) + .5)
-
+        if self.nbins<2:
+            self.nbins=2
         if 'min' in h5[path].attrs:
             self.min = h5[path].attrs['min']
         else:

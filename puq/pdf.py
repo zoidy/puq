@@ -675,8 +675,10 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
         if nbins == 0:
             iqr = scipy.stats.scoreatpercentile(data, 75) - scipy.stats.scoreatpercentile(data, 25)
             if iqr == 0.0:
-                raise ValueError("Cannot generate histogram fron non-variable data.")
-            nbins = int((np.max(data) - np.min(data)) / (2*iqr/len(data)**(1.0/3)) + .5)
+                #raise ValueError("Cannot generate histogram fron non-variable data.")
+                nbins=2
+            else:
+                nbins = int((np.max(data) - np.min(data)) / (2*iqr/len(data)**(1.0/3)) + .5)
 
         y, bins = np.histogram(data, nbins, normed=True)
         if len(bins) > 2:
@@ -693,8 +695,12 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
             y[y < 0] = 0    # if the extrapolation goes negative...
             p = PDF(x, y)
         else:
-            # not enough data. assume uniform over range
-            p = PDF([np.min(data), np.max(data)], [1, 1])
+            if np.min(data)!=np.max(data):
+                # not enough data. assume uniform over range
+                p = PDF([np.min(data), np.max(data)], [1, 1])
+            else:
+                p = PDF([np.min(data)], [1])
+        
     p.data = data
     return p
 
