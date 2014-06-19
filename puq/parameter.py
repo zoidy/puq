@@ -7,6 +7,7 @@ Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 '''
 from puq.pdf import NormalPDF, UniformPDF, ExperimentalPDF, WeibullPDF, RayleighPDF, ExponPDF, PDF
+from puq.constant import Constant
 from logging import debug
 import sys, matplotlib, sympy
 if sys.platform == 'darwin':
@@ -105,9 +106,13 @@ class Parameter(object):
         debug(args)
 
     def check_name(self, name):
+        if name=="c":
+            pass
+            #print('The name "c" is reserved')
+            #sys.exit(1)
         if name=="paramsFile":
             print('The name "paramsFile" is reserved')
-            sys.exit(0)
+            sys.exit(1)
         try:
             e = sympy.S(name)
             assert str(e.evalf()) == name
@@ -115,7 +120,7 @@ class Parameter(object):
         except:
             pass
         print "Parameter name %s conflicts with internal variables.\nPlease use a different name." % name
-        sys.exit(0)
+        sys.exit(1)
 
     def plot(self, **kwargs):
         self.pdf.plot(kwargs)
@@ -367,7 +372,7 @@ class CustomParameter(Parameter):
         #self.values is a 1D array
         if self.use_samples_val:
             if isinstance(self.pdf,PDF) and hasattr(self.pdf,'data'):
-                self.values=self.pdf.data
+                self.values=np.copy(self.pdf.data) #can't figure out why jsonpickle wont' work without copying
             else:
                 raise ValueError("'use_samples_val' was specified but 'pdf' was not an ExperimentalPDF")
             
@@ -413,3 +418,33 @@ class UniformParameter(Parameter):
     def __str__(self):
         return "UniformParameter %s (%s)\n\t%s" %\
             (self.name, self.description, self.pdf.__str__())
+            
+class ConstantParameter(Parameter):
+    '''
+    Class implementing a Parameter which is a constant. When
+    a variable parameter needs to be treated as a constant, this
+    class can be used as a drop-in replacement for any of the other
+    Parameter classes.
+
+    Args:
+      name: Name of the parameter. This should be a short name,
+        like a variable.
+      description:  A longer description of the parameter.
+      kwargs: Keyword args.  Valid args are:
+
+        ======== ============================
+        Property Description
+        ======== ============================
+        value     The constant value
+        ======== ============================
+
+    '''
+    def __init__(self, name, description, **kwargs):
+        self.name = self.check_name(name)
+        self.description = description
+        self.pdf = Constant(**kwargs)
+        self.values=self.pdf.data
+
+    def __str__(self):
+        return "ConstantParameter %s (%s)\n\t%s" %\
+            (self.name, self.description, self.pdf.__str__())            
