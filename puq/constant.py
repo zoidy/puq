@@ -37,7 +37,7 @@ class Constant(object):
         else:
             val=np.r_[value]
     
-        #need to copy it or else unpickling will fail with
+        #need to copy it or else jsonpickle will fail when unpickling with
         # IndexError: list index out of range
         #when running puq analyze
         self.data=np.copy(val)
