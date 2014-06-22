@@ -18,7 +18,7 @@ class PSweep(object):
         if not hasattr(self, 'iteration_cb'):
             self.iteration_cb = None
 
-    def run(self, sweep,dryrun=False):#FR
+    def run(self, sweep,dryrun=False):
         """
         Gets the parameters then adds the command plus parameters to
         the host object job list. Then tells the host to run.  After

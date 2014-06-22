@@ -13,6 +13,24 @@ import numpy as np
 import sympy
 from scipy.interpolate import Rbf
 
+try:
+    #add handlers for shapely, if it is available
+    import shapely.geometry,shapely.wkt
+    class ShapelyShapeHandler(jsonpickle.handlers.BaseHandler):
+        def flatten(self,obj,data):
+            data['value']=shapely.wkt.dumps(obj)
+            return data
+        def restore(self,obj):
+            return shapely.wkt.loads(obj['value'])
+    jsonpickle.handlers.registry.register(shapely.geometry.polygon.Polygon,
+                                          ShapelyShapeHandler)
+    jsonpickle.handlers.registry.register(shapely.geometry.point.Point,
+                                          ShapelyShapeHandler)
+    jsonpickle.handlers.registry.register(shapely.geometry.linestring.LineString,
+                                          ShapelyShapeHandler)
+except:
+    pass
+
 class NumpyFloatHandler(jsonpickle.handlers.BaseHandler):
     def flatten(self, obj, data):
         return float(obj)

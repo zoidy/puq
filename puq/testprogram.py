@@ -29,6 +29,11 @@ class TestProgram(object):
         via a file rather than on the command line. The file name is 
         specified via - -paramsFile=xxx in the exe string.
         This option must be used with newdir=True. See Example 3.
+        
+        Furthermore, when *paramsByFile* is True, custom command line 
+        arguments may be passed to the test program without interfering with
+        the parameter values passed to puq.
+        
 
     Example1::
 
@@ -75,7 +80,8 @@ class TestProgram(object):
       # The first column is the parameter name, the second is the parameter value, 
       # the third is the parameter description.
       #
-      # Note: the contents of input_params.txt can be loaded using numpy's loadtxt
+      # Rosen_prog then reads the parameters from the file name passed to it in the
+      # --paramsFile argument. The contents of input_params.txt can be loaded using numpy's loadtxt
       # with record-data type.
 
       prog = TestProgram(exe='python ../rosen_prog.py --paramsFile=input_params.txt',
