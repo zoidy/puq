@@ -87,7 +87,8 @@ class Sweep(object):
         h = h5.require_group('input')
 
         # basic parameter table for non-python reading of the hdf5 file
-        h['param_array'] = np.column_stack([p.values for p in self.psweep.params])
+        h.create_dataset('param_array',data=np.column_stack([p.values for p in self.psweep.params]),
+                         compression='gzip',compression_opts=9)
         h['param_array'].attrs['name'] = [str(p.name) for p in self.psweep.params]
         h['param_array'].attrs['description'] = [str(p.description) for p in self.psweep.params]
 
@@ -95,6 +96,7 @@ class Sweep(object):
         h = h.require_group('params')
         for p in self.psweep.params:
             h[p.name] = pickle(p)
+            #h.create_dataset(p.name,data=np.array(pickle(p),ndmin=2),compression='gzip',compression_opts=5)
 
         # input script
         if hasattr(self, 'input_script'):

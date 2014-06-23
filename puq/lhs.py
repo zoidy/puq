@@ -51,7 +51,7 @@ class LHS(PSweep):
         else:
             for p in self.params:
                 if hasattr(p, 'use_samples_val') and p.use_samples_val:
-                    if np.size(p.values)!=num:
+                    if np.size(p.values)<num:
                         raise Exception("Expected {} samples for parameter {}, found {}".format(num,p.name,np.size(p.values)))                       
                 else:
                     if ds:
