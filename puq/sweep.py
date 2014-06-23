@@ -96,7 +96,6 @@ class Sweep(object):
         h = h.require_group('params')
         for p in self.psweep.params:
             h[p.name] = pickle(p)
-            #h.create_dataset(p.name,data=np.array(pickle(p),ndmin=2),compression='gzip',compression_opts=5)
 
         # input script
         if hasattr(self, 'input_script'):
