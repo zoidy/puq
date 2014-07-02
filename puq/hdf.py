@@ -64,6 +64,37 @@ def set_result(hf, var, data, desc=''):
     hf['/output/data/%s' % var].attrs['description'] = desc
 
 @hdf5_wrap
+def get_result_pdf(hf, var=None):
+    """
+    Same as :func:`get_result` except a :class:`puq.PDF` object is returned.
+    """
+    psweep = hf.attrs['UQtype']
+        
+    if not '/{}'.format(psweep) in hf:
+        print('{} not found in data file {}'.format(psweep,str(hf)))
+        return []
+
+    output_variables = get_output_names(hf)
+    if len(output_variables) == 0:
+        print('No output variables found in data file {}'.format(str(hf)))
+        return []
+
+    if var and not var in output_variables:
+        print "Variable %s not found in output data" % var
+        raise ValueError
+    if not var:
+        if len(output_variables) > 1:
+            print "Output data contains multiple variables."
+            print "You must indicate which you want."
+            raise ValueError
+        var = output_variables[0]
+
+    if not '/{}/{}/pdf'.format(psweep,var) in hf:
+        raise Exception('No pdf for {} has been computed. Try running puq analyze'.format(var))
+        
+    return unpickle(hf['/{}/{}/pdf'.format(psweep,var)].value)
+    
+@hdf5_wrap
 def get_result(hf, var=None):
     """get_result(hf, var=None)
 
@@ -178,6 +209,9 @@ def get_sensitivity(hf, var):
 
     Returns the sensitivity indices for var in a dictionary with keys equal to 
     parameter names and values consisting of dictionaries with keys equal to sensitivity indices.
+    E.g., for a Smolyak run
+    
+        {<param name>:{'ustar':float, 'std':float}, ... }
 
     The keys in the sub dictionaries will vary depending on the type of sensitivity analysis 
     (Smolyak or Morris) but will contain at least 'ustar' and 'std'. Morris also contains 'u' and
@@ -190,7 +224,7 @@ def get_sensitivity(hf, var):
     """
     psweep = hf.attrs['UQtype']
     if not '/%s/%s/sensitivity' % (psweep, var) in hf:
-        print("Sensitivity indices weren't compute for output '{}'".format(var))
+        print("Sensitivity indices weren't computed for output '{}'".format(var))
         raise ValueError
         
     return unpickle(hf['/%s/%s/sensitivity' % (psweep, var)].value)
