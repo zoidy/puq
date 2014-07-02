@@ -14,6 +14,7 @@ from puq.jpickle import pickle,unpickle
 from puq.pdf import UniformPDF, ExperimentalPDF
 import SALib.sample as SAs
 import SALib.analyze as SAa
+import SALib.util as SAu
 import os
 import filecmp
 
@@ -121,11 +122,17 @@ class Morris(PSweep):
             #Note: the delimiters for all the files passed to the analyze function must be the same
             s=SAa.morris.analyze(self._salib_paramFile,self._salib_realizationsFile,
                 self._salib_analysisFile,column=0)
+                
+            #read the paramsFile to find the parameter names
+            pf=SAu.read_param_file(self._salib_paramFile)
             
             #put things in the same format as the smolyak module
-            sens={}            
-            for key,val in s.iteritems():
-                sens[key]={'u':val[0],'std': val[1], 'ustar': val[2],'ustar_conf95':val[3]}
+            sens={}
+            for i,param_name in enumerate(pf['names']):
+                sens[param_name]={'u':s['mu'][i],'std': s['sigma'][i], 'ustar': s['mu_star'][i],
+                                  'ustar_conf95':s['mu_star_conf'][i]}
+            #for key,val in s.iteritems():
+            #    sens[key]={'u':val[0],'std': val[1], 'ustar': val[2],'ustar_conf95':val[3]}
                 #senstxt+='{}\t{}\t{}\t{}'.format(key,val[0],val[1],val[2],val[3])
             
             sorted_list = sorted(sens.items(), lambda x, y: cmp(y[1]['ustar'], x[1]['ustar']))                
