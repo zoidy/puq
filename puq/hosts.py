@@ -3,7 +3,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import thread,time #FR
+import thread,time,datetime #FR
 import socket
 import os, re, signal, logging
 from logging import debug
@@ -20,18 +20,6 @@ class Host(object):
 
     def __init__(self):
 
-        # Need to find GNU time.  If /usr/bin/time is not GNU time
-        # then PUQ expects it to be in the path and called 'gtime'
-        tstr = 'gtime'
-        try:
-            ver = Popen("/usr/bin/time --version", shell=True, stderr=PIPE).stderr.read()
-            if ver.startswith("GNU"):
-                tstr = '/usr/bin/time'
-        except:
-            pass
-
-        #self.timestr = tstr + " -f \"HDF5:{'name':'time','value':%e,'desc':''}:5FDH\""
-        self.timestr="" #FR
         self.run_num = 0
 
     def reinit(self):
@@ -156,7 +144,7 @@ class Host(object):
         return "%s:%02d:%02d" % (hours, mins, secs)
 
     def cmdline(self, j):
-        cmd = '%s %s > %s.out 2> %s.err' % (self.timestr, j['cmd'], j['outfile'], j['outfile'])
+        cmd = '%s > %s.out 2> %s.err' % (j['cmd'], j['outfile'], j['outfile'])
         if j['dir']:
             cmd = 'cd %s;%s' % (j['dir'], cmd)
         return cmd
@@ -233,6 +221,8 @@ class InteractiveHost(Host):
         self._cpus_free = self.cpus_per_node
         self._running = []
         self._monitor = TextMonitor()
+        t_start=datetime.datetime.now()
+        print('Start: {}'.format(t_start.ctime()))
         try:
             self._run(dryrun)
             return True
@@ -243,6 +233,10 @@ class InteractiveHost(Host):
                 os.kill(p.pid, 99)
                 j['status'] = 0
             return False
+        finally:
+            t_end=datetime.datetime.now()
+            print('End: {}\tElapsed: {}'.format(t_end.ctime(),t_end-t_start))
+         
 
     def _run(self,dryrun=False):
 
@@ -265,17 +259,16 @@ class InteractiveHost(Host):
                     self.wait(cpus)
                 self._cpus_free -= cpus
                 sout = open(j['outfile']+'.out', 'w')
-                serr = open(j['outfile']+'.err', 'w')
-                cmd = self.timestr + ' ' + cmd
+                serr = open(j['outfile']+'.err', 'w')              
                 if j['dir']:
-                    cmd = 'cd %s && %s' % (j['dir'], cmd) #FR changed ; to &&
+                    cmd = 'cd %s && %s' % (j['dir'], cmd) #UNIX ; to &&
                 
-                
-                #FR                
+            
                 isdryrun=""
                 if dryrun:
                     isdryrun='--DRY RUN--' 
                 jobstr='Job {} of {} {}'.format(count,len(self.jobs),isdryrun)
+                jobstr+=datetime.datetime.now().ctime()
                 cpustr='CPUs requested: {} available: {}'.format(cpus,self._cpus_free)
                 borderstr='================================'
                 print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')                
@@ -284,21 +277,20 @@ class InteractiveHost(Host):
                     cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
                 
                 #include echoing commands so that the info is saved in the hdf5 file.
-                #escape the ampersands for windows
+                #escape the ampersands for windows (UNIX is different)
                 cmd2=cmd.replace('&','^&')
                 cmd='echo {} && echo {} && echo {} && {}'.format(jobstr,cpustr,cmd2,cmd)
                                 
                 # We are going to wait for each process, so we must keep the Popen object
                 # around, otherwise it will quietly wait for the process and exit,
-                # leaving our wait function waiting for nonexistent processes.               
+                # leaving our wait function waiting for nonexistent processes.
+                t_start=time.clock()
                 p = Popen(cmd , shell=True, stdout=sout, stderr=serr)
                 
-                #FR
-                print('Started process {}\n{}\n'.format(p.pid,borderstr))                
+                print('pid: {}\n{}\n'.format(p.pid,borderstr))
                 count+=1
                 
-                #FR
-                thread.start_new_thread(self.process_waiter,(p,))
+                thread.start_new_thread(self.process_waiter,(p,t_start,))
                 
                 j['status'] = 'R' 
                 self._running.append((p, j))
@@ -308,14 +300,17 @@ class InteractiveHost(Host):
 
 
     #FR
-    def process_waiter(self,popen):
+    def process_waiter(self,popen,t_start=None):
         #http://stackoverflow.com/questions/100624
-        t_start=time.clock()
+        
+        if t_start==None:
+            t_start=time.clock()
+            
         t_end=t_start
         try: 
-            popen.wait()
-            t_end=time.clock()
+            popen.wait()            
         finally: 
+            t_end=time.clock()
             w=[popen.pid,popen.returncode]
             for p, j in self._running:
                 if p.pid == w[0]:
@@ -327,12 +322,15 @@ class InteractiveHost(Host):
                         j['status'] = 'F'
                     self._cpus_free += j['cpu']
                     
-                    #substitute the time command in Host __init__
+                    #substitute the time command from Host __init__
                     f=open(j['outfile']+'.err','a')
                     f.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(
                         t_end-t_start))
                     f.close()
                     
+                    f=open(j['outfile']+'.out','a')
+                    f.write(datetime.datetime.now().ctime())
+                    f.close()
                     
                     break
         
