@@ -106,7 +106,8 @@ class TestProgram(object):
 
     def setup(self, dirname):
         if self.newdir:
-            os.makedirs(dirname)
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
             if self.infiles:
                 for src in self.infiles:
                     shutil.copy(src, dirname)

@@ -240,7 +240,7 @@ class InteractiveHost(Host):
             print '***INTERRUPT***\n'
             print "If you wish to resume, use 'puq resume'\n"
             for p, j in self._running:
-                os.kill(p.pid, signal.SIGKILL)
+                os.kill(p.pid, 99)
                 j['status'] = 0
             return False
 

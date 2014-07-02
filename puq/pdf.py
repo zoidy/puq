@@ -642,6 +642,8 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
     :type error: PDF. Typically a NormalPDF with a mean of 0.
     """
     data = np.array(data).astype(np.float64)
+    if np.any(np.isnan(data)):
+        raise ValueError('NaN data cannot be handled')
     if not force and min is not None and min > np.min(data):
         raise ValueError('min cannot be set to more than minimum value in the data.')
     if not force and max is not None and max < np.max(data):
