@@ -314,8 +314,8 @@ class InteractiveHost(Host):
         try: 
             popen.wait()
             
-            #acquire a lock once the process finishes
-            self._lock.acquire(wait=True)
+            #wait for the lock once the process finishes
+            self._lock.acquire()
         finally: 
             t_end=time.clock()
             w=[popen.pid,popen.returncode]
@@ -331,7 +331,7 @@ class InteractiveHost(Host):
                         j['status'] = 'F'
                     self._cpus_free += j['cpu']
                     
-                    #we're done messing with the shared vars. 
+                    #we're done messing with the shared vars. release the lock.
                     self._lock.release()
                     
                     #substitute the time command from Host __init__
