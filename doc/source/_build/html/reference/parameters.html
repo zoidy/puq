@@ -178,9 +178,9 @@ a UQ method (Monte Carlo, LHS, SimpleSweep only) instead of
 sampling the PDF fitted from the samples.</p>
 <p>Notes:</p>
 <p>If use_samples_val=True, <em>pdf</em> must be an ExperimentalPDF
-object or a 1D array of samples. If <em>pdf</em> is an ExperimentalPDF
-object, the samples of this CustomParameter are obtained from
-the &#8216;data&#8217; attribute of the ExperimentalPDF object.</p>
+or a 1D array of samples. If <em>pdf</em> is an ExperimentalPDF
+, the samples of this CustomParameter are obtained from
+the &#8216;data&#8217; attribute of the pdf object.</p>
 <p>Care must be taken to ensure that
 the samples correspond to the UQ method. E.g., if
 the UQ method is LHS, the samples must have been

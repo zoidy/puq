@@ -103,32 +103,42 @@ simulation to run.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<em>string</em>) &#8211;
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last">
+<li><p class="first"><strong>name</strong> (<em>string</em>) &#8211;
 Name of the program. This is the executable if
-no <em>exe</em> is defined.</li>
-<li><strong>exe</strong> (<em>string</em>) &#8211;
+no <em>exe</em> is defined.</p>
+</li>
+<li><p class="first"><strong>exe</strong> (<em>string</em>) &#8211;
 An executable command template to run. Strings of
 the form &#8216;$var&#8217; are replaced with the value of <em>var</em>.
 See python template strings
-(<a class="reference external" href="http://docs.python.org/2/library/string.html#template-strings">http://docs.python.org/2/library/string.html#template-strings</a>)</li>
-<li><strong>desc</strong> &#8211;
-Optional description of the test program.</li>
-<li><strong>newdir</strong> (<em>boolean</em>) &#8211;
+(<a class="reference external" href="http://docs.python.org/2/library/string.html#template-strings">http://docs.python.org/2/library/string.html#template-strings</a>)</p>
+</li>
+<li><p class="first"><strong>desc</strong> &#8211;
+Optional description of the test program.</p>
+</li>
+<li><p class="first"><strong>newdir</strong> (<em>boolean</em>) &#8211;
 Run each job in its own directory.  Necessary
-if the simulation generates output files.  Default is False.</li>
-<li><strong>infiles</strong> (<em>list</em>) &#8211;
+if the simulation generates output files.  Default is False.</p>
+</li>
+<li><p class="first"><strong>infiles</strong> (<em>list</em>) &#8211;
 If <em>newdir</em> is True, then this is an optional
-list of files that should be copied to each new directory.</li>
-<li><strong>outfiles</strong> (<em>list</em>) &#8211;
+list of files that should be copied to each new directory.</p>
+</li>
+<li><p class="first"><strong>outfiles</strong> (<em>list</em>) &#8211;
 An optional list of files that will be saved
 into the HDF5 file upon completion. The files will be in
-/output/jobs/n where &#8216;n&#8217; is the job number.</li>
-<li><strong>paramsByFile</strong> (<em>boolean</em>) &#8211;
+/output/jobs/n where &#8216;n&#8217; is the job number.</p>
+</li>
+<li><p class="first"><strong>paramsByFile</strong> (<em>boolean</em>) &#8211;
 If True, passes parameters to the TestProgram
 via a file rather than on the command line. The file name is
 specified via - -paramsFile=xxx in the exe string.
-This option must be used with newdir=True. See Example 3.</li>
+This option must be used with newdir=True. See Example 3.</p>
+<p>Furthermore, when <em>paramsByFile</em> is True, custom command line
+arguments may be passed to the test program without interfering with
+the parameter values passed to puq.</p>
+</li>
 </ul>
 </td>
 </tr>
@@ -177,7 +187,8 @@ This option must be used with newdir=True. See Example 3.</li>
 <span class="c"># The first column is the parameter name, the second is the parameter value,</span>
 <span class="c"># the third is the parameter description.</span>
 <span class="c">#</span>
-<span class="c"># Note: the contents of input_params.txt can be loaded using numpy&#39;s loadtxt</span>
+<span class="c"># Rosen_prog then reads the parameters from the file name passed to it in the</span>
+<span class="c"># --paramsFile argument. The contents of input_params.txt can be loaded using numpy&#39;s loadtxt</span>
 <span class="c"># with record-data type.</span>
 
 <span class="n">prog</span> <span class="o">=</span> <span class="n">TestProgram</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s">&#39;python ../rosen_prog.py --paramsFile=input_params.txt&#39;</span><span class="p">,</span>

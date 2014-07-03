@@ -3,7 +3,8 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import thread,time,datetime #FR
+import thread,time,datetime
+from threading import Lock
 import socket
 import os, re, signal, logging
 from logging import debug
@@ -212,6 +213,8 @@ class InteractiveHost(Host):
             self.cpus_per_node = cpu_count()
         self.hostname = socket.gethostname()
         self.jobs = []
+        
+        self._lock=Lock()
 
     # run, monitor and status return
     # True (1) is successful
@@ -230,7 +233,10 @@ class InteractiveHost(Host):
             print '***INTERRUPT***\n'
             print "If you wish to resume, use 'puq resume'\n"
             for p, j in self._running:
-                os.kill(p.pid, 99)
+                try:
+                    os.kill(p.pid, 99)
+                except Exception,e:
+                    print("Error killing pdf {}. {}".format(p.pid,str(e)))
                 j['status'] = 0
             return False
         finally:
@@ -249,7 +255,7 @@ class InteractiveHost(Host):
         if errors:
             print "Previous run had %d errors. Retrying." % errors
 
-        count=1 #FR
+        count=1
         for j in self.jobs:
             if j['status'] == 0 or j['status'] == 'X':
                 cmd = j['cmd']
@@ -269,7 +275,7 @@ class InteractiveHost(Host):
                     isdryrun='--DRY RUN--' 
                 jobstr='Job {} of {} {}'.format(count,len(self.jobs),isdryrun)
                 jobstr+=datetime.datetime.now().ctime()
-                cpustr='CPUs requested: {} available: {}'.format(cpus,self._cpus_free)
+                cpustr='CPUs provisioned: {}, {} remain free'.format(cpus,self._cpus_free)
                 borderstr='================================'
                 print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')                
                 
@@ -298,8 +304,6 @@ class InteractiveHost(Host):
                                 
         self.wait(0)
 
-
-    #FR
     def process_waiter(self,popen,t_start=None):
         #http://stackoverflow.com/questions/100624
         
@@ -308,12 +312,17 @@ class InteractiveHost(Host):
             
         t_end=t_start
         try: 
-            popen.wait()            
+            popen.wait()
+            
+            #acquire a lock once the process finishes
+            self._lock.acquire(wait=True)
         finally: 
             t_end=time.clock()
             w=[popen.pid,popen.returncode]
+            found=False
             for p, j in self._running:
                 if p.pid == w[0]:
+                    found=True
                     self._running.remove((p, j))
                     if w[1]>0:
                         self.handle_error(w[1], j,p.pid)
@@ -321,6 +330,9 @@ class InteractiveHost(Host):
                     else:
                         j['status'] = 'F'
                     self._cpus_free += j['cpu']
+                    
+                    #we're done messing with the shared vars. 
+                    self._lock.release()
                     
                     #substitute the time command from Host __init__
                     f=open(j['outfile']+'.err','a')
@@ -333,6 +345,9 @@ class InteractiveHost(Host):
                     f.close()
                     
                     break
+            
+            if not found:
+                self._lock.release()
         
     def handle_error(self, stat, j,pid=-1):
         #stat = os.WEXITSTATUS(stat) #FR
