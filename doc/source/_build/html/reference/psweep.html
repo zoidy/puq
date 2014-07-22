@@ -95,6 +95,21 @@
   <div class="section" id="psweep-reference">
 <h1>PSweep Reference<a class="headerlink" href="#psweep-reference" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
+<dt id="puq.PSweep">
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">PSweep</tt><big>(</big><em>iteration_cb=None</em><big>)</big><a class="headerlink" href="#puq.PSweep" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="puq.PSweep.run">
+<tt class="descname">run</tt><big>(</big><em>sweep</em>, <em>dryrun=False</em><big>)</big><a class="headerlink" href="#puq.PSweep.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the parameters then adds the command plus parameters to
+the host object job list. Then tells the host to run.  After
+all jobs have completed, collect the data and call analyze().
+If iteration_cb is defined, call it.</p>
+<p>Returns True on success.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="puq.LHS">
 <em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">LHS</tt><big>(</big><em>params</em>, <em>num</em>, <em>ds=False</em>, <em>response=True</em>, <em>iteration_cb=None</em><big>)</big><a class="headerlink" href="#puq.LHS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class implementing Latin hypercube sampling (LHS).</p>

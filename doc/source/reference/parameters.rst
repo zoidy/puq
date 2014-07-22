@@ -15,5 +15,5 @@ Parameters
 	:members:
 .. autoclass:: WeibullParameter
 	:members:
-.. autoclass:: PSweep
-   :members:
+.. autoclass:: ConstantParameter
+	:members:

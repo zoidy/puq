@@ -465,18 +465,48 @@ Keyword args.  Valid args are:</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="puq.PSweep">
-<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">PSweep</tt><big>(</big><em>iteration_cb=None</em><big>)</big><a class="headerlink" href="#puq.PSweep" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="puq.PSweep.run">
-<tt class="descname">run</tt><big>(</big><em>sweep</em>, <em>dryrun=False</em><big>)</big><a class="headerlink" href="#puq.PSweep.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gets the parameters then adds the command plus parameters to
-the host object job list. Then tells the host to run.  After
-all jobs have completed, collect the data and call analyze().
-If iteration_cb is defined, call it.</p>
-<p>Returns True on success.</p>
-</dd></dl>
-
+<dt id="puq.ConstantParameter">
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">ConstantParameter</tt><big>(</big><em>name</em>, <em>description</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#puq.ConstantParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class implementing a Parameter which is a constant. When
+a variable parameter needs to be treated as a constant, this
+class can be used as a drop-in replacement for any of the other
+Parameter classes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last">
+<li><p class="first"><strong>name</strong> &#8211;
+Name of the parameter. This should be a short name,
+like a variable.</p>
+</li>
+<li><p class="first"><strong>description</strong> &#8211;
+A longer description of the parameter.</p>
+</li>
+<li><p class="first"><strong>kwargs</strong> &#8211;
+Keyword args.  Valid args are:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Property</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>value</td>
+<td>The constant value</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
