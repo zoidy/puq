@@ -165,8 +165,9 @@ class Morris(PSweep):
             if self.response:
                 print('Morris method does not support creating response surfaces')
                 raise ValueError
-                #p.values = np.concatenate((p.values, UniformPDF(*p.pdf.range).random(num)))
             else:
+                if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                    print("Warning: ignoring option 'use_samples_val' for {}".format(p.name))
                 newvalues= p.pdf.ppf(samples[:,i])
                 p.values = np.concatenate((p.values, newvalues))
             i+=1

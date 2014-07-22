@@ -108,6 +108,8 @@ class LHS(PSweep):
             if self.response:
                 v = np.sort(UniformPDF(*p.pdf.range).ds(self.num * 3))
             else:
+                if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                    raise Exception("Can't extend LHS sweeps containing parameters with 'use_samples_val' is True")
                 v = np.sort(p.pdf.ds(self.num * 3))
             # remove the ones we already did
             v = np.concatenate((v[0::3], v[2::3]))

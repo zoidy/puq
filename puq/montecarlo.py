@@ -102,6 +102,13 @@ class MonteCarlo(PSweep):
             if self.response:
                 p.values = np.concatenate((p.values, UniformPDF(*p.pdf.range).random(num)))
             else:
+                if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                    if np.size(p.values)<self.num+num:
+                        #may need to allow passing in additional custom samples so
+                        #the user can add more if needed. Else exception will be thrown when
+                        #trying to extend run where user defined the parameter values manually
+                        raise Exception("Not enough samples for param {}. Expected {} found {}".format(p.name,
+                                        self.num+num,np.size(p.values)))
                 p.values = np.concatenate((p.values, p.pdf.random(num)))
         self._start_at = self.num
         self.num += num
