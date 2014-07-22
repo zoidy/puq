@@ -350,7 +350,6 @@ class InteractiveHost(Host):
                 self._lock.release()
         
     def handle_error(self, stat, j,pid=-1):
-        #stat = os.WEXITSTATUS(stat) #FR
         str=40*'*' + '\n'
         str+="ERROR (pid {}): {} returned {}\n".format(pid,j['cmd'], stat)
         try:

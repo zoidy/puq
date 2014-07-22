@@ -106,7 +106,6 @@ class Sweep(object):
                 h5['input/script'] = "Source was unavailable."
             h5.close()
 
-    #FR
     def _save_and_run(self,dryrun=False):
         self._save_hdf5()
         res = self.host.run(dryrun)
@@ -114,7 +113,7 @@ class Sweep(object):
             self._save_hdf5()
         return res
 
-    def run(self, fn=None, overwrite=False, dryrun=False):#FR
+    def run(self, fn=None, overwrite=False, dryrun=False):
         """
         Calls PSweep.run() to run all the jobs in the Sweep.  Collect the data
         from the outputs and call the PSweep analyze method.  If the PSweep method
@@ -154,7 +153,7 @@ class Sweep(object):
                         sys.exit(-1)
                 os.remove(fn)
         vprint(1, 'Saving run to %s.hdf5' % self.fname)
-        return self.psweep.run(self,dryrun)#FR
+        return self.psweep.run(self,dryrun)
 
     def extend(self, num=None):
         return self.psweep.extend(num)
