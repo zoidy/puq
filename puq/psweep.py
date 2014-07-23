@@ -35,7 +35,9 @@ class PSweep(object):
                 return False
 
             hf = h5py.File(sweep.fname + '.hdf5')
-            sweep.collect_data(hf)
+            if not sweep.collect_data(hf):
+                hf.close()
+                return False
             self.analyze(hf) #defined in subclasses
             hf.close()
 
