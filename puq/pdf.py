@@ -98,7 +98,11 @@ class PDF(object):
         self.mean = trapz(self.x * self.y, self.x)
         self.dev = np.sqrt(np.abs(trapz(self.y * (self.x - self.mean)**2, self.x)))
         
-        self.isResampled=resample
+        #stupid way to do it but else jsonpickle can't unpickle it for some reason
+        if resample:
+            self.isResampled=True
+        else:
+            self.isResampled=False
 
     @property
     def range(self):

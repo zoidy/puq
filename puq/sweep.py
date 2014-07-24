@@ -4,8 +4,8 @@ Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
 
-#import time, os, re, pwd, h5py, sys #FR
-import time, os, re, h5py, sys #FR
+import copy
+import time, os, re, h5py, sys 
 import numpy as np
 from puq.testprogram import TestProgram
 from numpy import ndarray
@@ -56,7 +56,7 @@ class Sweep(object):
         secperyear = 365*24*60*60
         self.fname = 'sweep_%s' % int((time.time() % secperyear) * 10)
         self.psweep = psweep
-        self.host.prog = self.prog
+        self.host.prog = copy.copy(self.prog) #else jsonpickle can't unpickle without error
         self.input_script = os.path.abspath(sys.argv[0])
 
     def _save_hdf5(self):
