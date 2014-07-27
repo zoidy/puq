@@ -2,6 +2,9 @@ PSweep Reference
 ================
 .. currentmodule:: puq
 
+.. autoclass:: PSweep
+   :members:
+   
 .. autoclass:: LHS
    :members: __init__
 

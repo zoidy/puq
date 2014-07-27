@@ -938,6 +938,174 @@ class PdfFrame:
         if newmax != self.max:
             self.changed(max=newmax)
 
+class ParameterSamplesFrame:
+
+    def __init__(self, parent):
+        self.parent = parent
+        ParameterSamplesFrame.me = weakref.proxy(self)
+
+    def cleanup(self):
+        try:
+            self.tframe.pack_forget()
+            self.bframe.pack_forget()
+            self.canvas._tkcanvas.pack_forget()
+            del self.canvas
+            del self.f
+        except:
+            pass
+
+    def export_pdf(self):
+        # Dump pdf data as csv
+        import csv
+        from tkFileDialog import asksaveasfilename
+        filename = asksaveasfilename(title="Save PDF to CSV file...",
+                                     initialfile='%s-pdf' % self.par.name,
+                                     defaultextension='.csv',
+                                     filetypes=[('CSV', '*.csv')])
+        if not filename:
+            return
+
+        with open(filename, 'wb') as csvfile:
+            spamwriter = csv.writer(csvfile)
+            for x, prob in np.column_stack((self.pdf.x, self.pdf.y)):
+                spamwriter.writerow([x, prob])
+        m = "Wrote %s pairs of (value, probability) data to '%s'.\n" % (len(self.pdf.x), filename)
+
+        t = Toplevel(self.parent)
+        t.title("Wrote CSV File")
+        msg = Message(t, text=m, width=500)
+        button = Button(t, text="OK", command=t.destroy)
+        button.pack(side=BOTTOM)
+        msg.pack(fill=BOTH, expand=1)
+
+    def plot(self, ext):
+        from tkFileDialog import asksaveasfilename
+        filename = asksaveasfilename(title="Plot to file...",
+                                     initialfile='%s-pdf' % self.par.name,
+                                     defaultextension='.%s' % ext,
+                                     filetypes=[(ext.upper(), '*.%s' % ext)])
+        if not filename:
+            return
+        self.canvas.print_figure(filename)
+
+    def state(self, st, par, path):
+        global h5, cached_fit
+        self.cleanup()
+        if st != 'PARAMETER_SAMPLES':
+            return
+
+        self.tframe = Frame(self.parent)
+        self.bframe = Frame(self.parent)
+        self.lframe = Frame(self.bframe)
+        self.rframe = Frame(self.bframe)
+
+        self.values=par.values
+        self.nbins=11
+        iqr = scipy.stats.scoreatpercentile(self.values, 75) - scipy.stats.scoreatpercentile(self.values, 25)
+        if iqr == 0.0:
+            self.nbins = 11
+        else:
+            self.nbins = int((np.max(self.values) - np.min(self.values)) / (2*iqr/len(self.values)**(1.0/3)) + .5)
+        if self.nbins<2:
+            self.nbins=2
+
+        # TOP FRAME - CANVAS
+        self.f = plt.figure(figsize=(5, 5))
+        self.a = self.f.add_subplot(111)
+        self.a.grid(True)
+        self.a.set_ylabel("Probability")
+        self.line1 = self.a.hist(self.values, self.nbins, normed=1, facecolor='blue', alpha=0.6)
+        self.canvas = FigureCanvasTkAgg(self.f, master=self.tframe)
+        self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+        self.canvas._tkcanvas.pack(side='top', fill='both', expand=1)
+        
+        # BOTTOM RIGHT
+        """
+        try:
+            fit = cached_fit[self.path][0]
+            if fit:
+                fit = 'Gaussian'
+            else:
+                fit = 'Linear'
+        except:
+            fit = None
+        self.fitframe = LabelFrame(self.rframe, text="FIT")
+        self.fit = RB(self.fitframe, ["Gaussian", "Linear"], val=fit, callback=self.fit_changed)
+        self.fitframe.pack(side=RIGHT, fill=BOTH, expand=1)
+        """
+        frame1 = Frame(self.lframe)
+        frame2 = Frame(self.lframe)
+        frame3 = Frame(self.lframe)
+        MyLabel(frame1, 'Name', par.name, bg='white').frame.pack(side=LEFT, padx=5)
+        MyLabel(frame1, 'Description', par.description, bg='white').frame.pack(side=LEFT, padx=5)
+        MyLabel(frame2, 'Type', par.__class__.__name__, bg='white').frame.pack(side=LEFT, padx=5)
+        self.entry_min = MyEntry(frame3, "Min", StringVar(), '%.3g' % np.min(self.values), callback=self.min_changed)
+        self.entry_max = MyEntry(frame3, "Max", StringVar(), '%.3g' % np.max(self.values), callback=self.max_changed)
+        MyLabel(frame3, "Mean", '%.3g' % np.mean(self.values), bg='white').frame.pack(side=LEFT, padx=5)
+        MyLabel(frame3, "Dev", '%.3g' % np.std(self.values), bg='white').frame.pack(side=LEFT, padx=5)
+        frame1.pack(side=TOP, padx=5, pady=5, anchor='w')
+        frame2.pack(side=TOP, padx=5, pady=5, anchor='w')
+        frame3.pack(side=TOP, padx=5, pady=5, anchor='w')
+        
+        # Bin frame
+        binframe = LabelFrame(self.lframe, text='Bins', padx=5, pady=5)
+        binscale = Scale(binframe, from_=2, to=100, orient=HORIZONTAL,
+                         resolution=1, showvalue=0, command=self.bins_changed)
+        binscale.set(self.nbins)
+        self.bine = Entry(binframe, width=5)
+        self.bine.bind('<Return>', self.bins_changed)
+        self.bine.pack(side=LEFT)
+        self.bine.delete(0, END)
+        self.bine.insert(0, str(self.nbins))
+        binscale.pack(fill=BOTH, expand=True, side=LEFT)
+        binframe.pack(side=TOP, fill=BOTH, expand=True)
+
+        self.lframe.pack(side=LEFT, fill=BOTH, expand=1)
+        self.rframe.pack(side=RIGHT, fill=BOTH, expand=1)
+        self.tframe.pack(side=TOP, fill=BOTH, expand=1)
+        self.bframe.pack(side=TOP, fill=BOTH, expand=0)
+
+    def bins_changed(self, val):
+        if isinstance(val, Event):
+            val = int(self.bine.get())
+        else:
+            val = int(val)
+        if val != self.nbins:
+            #print "bins_changed", val
+            self.bine.delete(0, END)
+            self.bine.insert(0, str(val))
+            self.changed(nbins=val)
+            
+    def changed(self, fit=None, min=None, max=None,nbins=None):
+        if nbins!=None:
+            self.nbins=nbins
+            for patch in self.line1[2]:
+                patch.remove()
+            
+            self.a.relim()
+            self.line1=self.a.hist(self.values, self.nbins, normed=1, facecolor='blue', alpha=0.6)
+            
+            self.canvas.draw()
+        #print 'Parameter Changed %s %s %s' % (fit, min, max)
+        # FIXME
+
+    def fit_changed(self, val):
+        if val == 'Gaussian':
+            fit = True
+        else:
+            fit = False
+        self.changed(fit=fit)
+
+    def min_changed(self, newmin):
+        if newmin != '':
+            newmin = float(newmin)
+        self.changed(min=newmin)
+
+    def max_changed(self, newmax):
+        if newmax != '':
+            newmax = float(newmax)
+        self.changed(max=newmax)
+
 class ParameterFrame:
 
     def __init__(self, parent):
@@ -1067,7 +1235,6 @@ class ParameterFrame:
         if newmax != '':
             newmax = float(newmax)
         self.changed(max=newmax)
-
 
 class TimeFrame:
     def __init__(self, parent):
@@ -1382,6 +1549,8 @@ class MyApp:
         self.h5 = h5
         self.errors = errors
         parent.protocol('WM_DELETE_WINDOW', root.quit)
+        
+        root.geometry("900x630")
 
         tbar = Frame(parent)
         tbar.pack(side=TOP, anchor='w')
@@ -1425,6 +1594,7 @@ class MyApp:
             ResponseFrame(self.rframe),
             PdfFrame(self.rframe),
             ParameterFrame(self.rframe),
+            ParameterSamplesFrame(self.rframe),
             ParFrame(self.bframe),
             ParFrame2(self.rframe),
             SurFrame(self.bframe),
@@ -1531,6 +1701,12 @@ class MyApp:
             par_id = t.insert("", "end", iid='params', text='parameters', values=["/input/params", 'D_PARLIST'])
             for p in h5['/input/params']:
                 t.insert(par_id, "end", text=p, values=["/input/params/%s" % (p), 'PARAMETER'])
+                
+        #param samples
+        if '/input/params' in h5:
+            par_id = t.insert("", "end", iid='params_samp', text='parameter samples', values=["/input/params", 'D_PARLIST'])
+            for p in h5['/input/params']:
+                t.insert(par_id, "end", text=p, values=["/input/params/%s" % (p), 'PARAMETER_SAMPLES'])
 
         # psweep results
         psweep = h5.attrs['UQtype']

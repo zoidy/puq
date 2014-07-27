@@ -99,8 +99,8 @@ def process_data(hf, grpname, callback):
                 except TypeError:
                     vgrp[v[0]] = repr(v[1])
     except Exception,e:
-        print("error processing data (maybe all runs failed?): " + str(e))
-        #traceback.print_exc()
+        print("error processing data (maybe some runs failed? See stack trace.): " + str(e))
+        traceback.print_exc()
 
 def strip(fname):
     tmpname = fname + '_strip'

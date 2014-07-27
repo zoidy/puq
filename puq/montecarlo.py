@@ -49,7 +49,10 @@ class MonteCarlo(PSweep):
                 #only generate new samples if use_samples is false
                 #see CustomParameter in parameter.py
                 if hasattr(p, 'use_samples_val') and p.use_samples_val:
-                    if np.size(p.values)!=num:
+                    if np.size(p.values)<num:
+                        #if the number of samples in the parameter is less than the number
+                        #of desired MC runs, raise exception. If the number is greater, only
+                        #the first num samples are used
                         raise Exception("Expected {} samples for parameter {}, found {}".format(num,p.name,np.size(p.values)))
                 else:
                     p.values = p.pdf.random(num)
@@ -99,6 +102,13 @@ class MonteCarlo(PSweep):
             if self.response:
                 p.values = np.concatenate((p.values, UniformPDF(*p.pdf.range).random(num)))
             else:
+                if hasattr(p, 'use_samples_val') and p.use_samples_val:
+                    if np.size(p.values)<self.num+num:
+                        #may need to allow passing in additional custom samples so
+                        #the user can add more if needed. Else exception will be thrown when
+                        #trying to extend run where user defined the parameter values manually
+                        raise Exception("Not enough samples for param {}. Expected {} found {}".format(p.name,
+                                        self.num+num,np.size(p.values)))
                 p.values = np.concatenate((p.values, p.pdf.random(num)))
         self._start_at = self.num
         self.num += num

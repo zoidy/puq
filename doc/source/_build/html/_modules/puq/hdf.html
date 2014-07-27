@@ -141,6 +141,37 @@
     <span class="n">hf</span><span class="p">[</span><span class="s">&#39;/output/data/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">var</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&#39;description&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">desc</span>
 </div>
 <span class="nd">@hdf5_wrap</span>
+<div class="viewcode-block" id="get_result_pdf"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.get_result_pdf">[docs]</a><span class="k">def</span> <span class="nf">get_result_pdf</span><span class="p">(</span><span class="n">hf</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Same as :func:`get_result` except a :class:`puq.PDF` object is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">psweep</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&#39;UQtype&#39;</span><span class="p">]</span>
+        
+    <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">psweep</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;{} not found in data file {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">psweep</span><span class="p">,</span><span class="nb">str</span><span class="p">(</span><span class="n">hf</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="n">output_variables</span> <span class="o">=</span> <span class="n">get_output_names</span><span class="p">(</span><span class="n">hf</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_variables</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;No output variables found in data file {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">hf</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">var</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">output_variables</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;Variable </span><span class="si">%s</span><span class="s"> not found in output data&quot;</span> <span class="o">%</span> <span class="n">var</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">var</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_variables</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">&quot;Output data contains multiple variables.&quot;</span>
+            <span class="k">print</span> <span class="s">&quot;You must indicate which you want.&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">output_variables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;/{}/{}/pdf&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">psweep</span><span class="p">,</span><span class="n">var</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;No pdf for {} has been computed. Try running puq analyze&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+        
+    <span class="k">return</span> <span class="n">unpickle</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s">&#39;/{}/{}/pdf&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">psweep</span><span class="p">,</span><span class="n">var</span><span class="p">)]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    </div>
+<span class="nd">@hdf5_wrap</span>
 <div class="viewcode-block" id="get_result"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.get_result">[docs]</a><span class="k">def</span> <span class="nf">get_result</span><span class="p">(</span><span class="n">hf</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;get_result(hf, var=None)</span>
 
@@ -255,6 +286,9 @@
 
 <span class="sd">    Returns the sensitivity indices for var in a dictionary with keys equal to </span>
 <span class="sd">    parameter names and values consisting of dictionaries with keys equal to sensitivity indices.</span>
+<span class="sd">    E.g., for a Smolyak run</span>
+<span class="sd">    </span>
+<span class="sd">        {&lt;param name&gt;:{&#39;ustar&#39;:float, &#39;std&#39;:float}, ... }</span>
 
 <span class="sd">    The keys in the sub dictionaries will vary depending on the type of sensitivity analysis </span>
 <span class="sd">    (Smolyak or Morris) but will contain at least &#39;ustar&#39; and &#39;std&#39;. Morris also contains &#39;u&#39; and</span>
@@ -267,7 +301,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">psweep</span> <span class="o">=</span> <span class="n">hf</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&#39;UQtype&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/sensitivity&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">psweep</span><span class="p">,</span> <span class="n">var</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Sensitivity indices weren&#39;t compute for output &#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&quot;Sensitivity indices weren&#39;t computed for output &#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">var</span><span class="p">))</span>
         <span class="k">raise</span> <span class="ne">ValueError</span>
         
     <span class="k">return</span> <span class="n">unpickle</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s">&#39;/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/sensitivity&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">psweep</span><span class="p">,</span> <span class="n">var</span><span class="p">)]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>

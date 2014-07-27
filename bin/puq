@@ -220,7 +220,7 @@ def analyze(*args):
         sd = get_psamples_from_csv(sweep, h5, opt.psamples)
         h5['psamples'] = get_psamples(sweep.psweep.params, psamples=sd)
     h5.close()
-
+    
     puq.analyzer(sweep, errors)
     return True
 

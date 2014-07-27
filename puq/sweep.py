@@ -4,8 +4,8 @@ Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
 
-#import time, os, re, pwd, h5py, sys #FR
-import time, os, re, h5py, sys #FR
+import copy
+import time, os, re, h5py, sys 
 import numpy as np
 from puq.testprogram import TestProgram
 from numpy import ndarray
@@ -56,7 +56,7 @@ class Sweep(object):
         secperyear = 365*24*60*60
         self.fname = 'sweep_%s' % int((time.time() % secperyear) * 10)
         self.psweep = psweep
-        self.host.prog = self.prog
+        self.host.prog = copy.copy(self.prog) #else jsonpickle can't unpickle without error
         self.input_script = os.path.abspath(sys.argv[0])
 
     def _save_hdf5(self):
@@ -87,7 +87,8 @@ class Sweep(object):
         h = h5.require_group('input')
 
         # basic parameter table for non-python reading of the hdf5 file
-        h['param_array'] = np.column_stack([p.values for p in self.psweep.params])
+        h.create_dataset('param_array',data=np.column_stack([p.values for p in self.psweep.params]),
+                         compression='gzip',compression_opts=9)
         h['param_array'].attrs['name'] = [str(p.name) for p in self.psweep.params]
         h['param_array'].attrs['description'] = [str(p.description) for p in self.psweep.params]
 
@@ -105,7 +106,6 @@ class Sweep(object):
                 h5['input/script'] = "Source was unavailable."
             h5.close()
 
-    #FR
     def _save_and_run(self,dryrun=False):
         self._save_hdf5()
         res = self.host.run(dryrun)
@@ -113,7 +113,7 @@ class Sweep(object):
             self._save_hdf5()
         return res
 
-    def run(self, fn=None, overwrite=False, dryrun=False):#FR
+    def run(self, fn=None, overwrite=False, dryrun=False):
         """
         Calls PSweep.run() to run all the jobs in the Sweep.  Collect the data
         from the outputs and call the PSweep analyze method.  If the PSweep method
@@ -153,7 +153,7 @@ class Sweep(object):
                         sys.exit(-1)
                 os.remove(fn)
         vprint(1, 'Saving run to %s.hdf5' % self.fname)
-        return self.psweep.run(self,dryrun)#FR
+        return self.psweep.run(self,dryrun)
 
     def extend(self, num=None):
         return self.psweep.extend(num)

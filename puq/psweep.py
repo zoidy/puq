@@ -18,7 +18,7 @@ class PSweep(object):
         if not hasattr(self, 'iteration_cb'):
             self.iteration_cb = None
 
-    def run(self, sweep,dryrun=False):#FR
+    def run(self, sweep,dryrun=False):
         """
         Gets the parameters then adds the command plus parameters to
         the host object job list. Then tells the host to run.  After
@@ -35,7 +35,9 @@ class PSweep(object):
                 return False
 
             hf = h5py.File(sweep.fname + '.hdf5')
-            sweep.collect_data(hf)
+            if not sweep.collect_data(hf):
+                hf.close()
+                return False
             self.analyze(hf) #defined in subclasses
             hf.close()
 

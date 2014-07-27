@@ -97,6 +97,12 @@ class PDF(object):
 
         self.mean = trapz(self.x * self.y, self.x)
         self.dev = np.sqrt(np.abs(trapz(self.y * (self.x - self.mean)**2, self.x)))
+        
+        #stupid way to do it but else jsonpickle can't unpickle it for some reason
+        if resample:
+            self.isResampled=True
+        else:
+            self.isResampled=False
 
     @property
     def range(self):
@@ -373,9 +379,31 @@ class PDF(object):
         _str += "mean=%.3g  dev=%.3g  mode=%.3g" % (self.mean, self.dev, self.mode)
         return _str
 
+    def plot_cdf(self,color='',fig=False):
+        """
+        Plot the CDF.
+        
+        :param color: Optional color for the plot.
+        :type color: String.
+        :param fig: Create a new matplotlib figure to hold the plot.
+        :type fig: Boolean.
+        :param cdf: plots the CDF instead.
+        :returns: A list of lines that were added.
+        """
+        try:
+            if fig:
+                plt.figure()
+            if color:
+                return plt.plot(self.x, self.cdfy, color=color)
+            else:
+                return plt.plot(self.x, self.cdfy, color='g')
+        finally:
+            if self.isResampled:
+                print('x-values for pdf in fig {} were resampled'.format(plt.gcf().number))
+                
     def plot(self, color='', fig=False):
         """
-        Plot a PDF.
+        Plots a PDF.
 
         :param color: Optional color for the plot.
         :type color: String.
@@ -383,16 +411,20 @@ class PDF(object):
         :type fig: Boolean.
         :returns: A list of lines that were added.
         """
-        if fig:
-            plt.figure()
-        if color:
-            plt.plot([self.x[0], self.x[0]], [0, self.y[0]], color=color)
-            plt.plot([self.x[-1], self.x[-1]], [0, self.y[-1]], color=color)
-            return plt.plot(self.x, self.y, color=color)
-        else:
-            plt.plot([self.x[0], self.x[0]], [0, self.y[0]], color='g')
-            plt.plot([self.x[-1], self.x[-1]], [0, self.y[-1]], color='g')
-            return plt.plot(self.x, self.y, color='g')
+        try:
+            if fig:
+                plt.figure()
+            if color:
+                plt.plot([self.x[0], self.x[0]], [0, self.y[0]], color=color)
+                plt.plot([self.x[-1], self.x[-1]], [0, self.y[-1]], color=color)
+                return plt.plot(self.x, self.y, color=color)
+            else:
+                plt.plot([self.x[0], self.x[0]], [0, self.y[0]], color='g')
+                plt.plot([self.x[-1], self.x[-1]], [0, self.y[-1]], color='g')
+                return plt.plot(self.x, self.y, color='g')
+        finally:
+            if self.isResampled:
+                print('x-values for pdf in fig {} were resampled'.format(plt.gcf().number))
 
     # ipython pretty print method
     def _repr_pretty_(self, p, cycle):
@@ -642,6 +674,8 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
     :type error: PDF. Typically a NormalPDF with a mean of 0.
     """
     data = np.array(data).astype(np.float64)
+    if np.any(np.isnan(data)):
+        raise ValueError('NaN data cannot be handled')
     if not force and min is not None and min > np.min(data):
         raise ValueError('min cannot be set to more than minimum value in the data.')
     if not force and max is not None and max < np.max(data):
