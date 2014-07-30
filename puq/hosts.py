@@ -3,8 +3,9 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import thread,time,datetime
+import thread,time,datetime,traceback,shlex,sys
 from threading import Lock
+import multiprocessing
 import socket
 import os, re, signal, logging
 from logging import debug
@@ -38,7 +39,7 @@ class Host(object):
             _dir = self.prog.setup(output)
 
             if self.prog.paramsByFile:
-                cmd=self.prog.cmdByFile(a,_dir)
+                cmd = self.prog.cmdByFile(a,_dir)
             else:
                 cmd = self.prog.cmd(a) #prog is the testprogram. initialized from sweep.py
             
@@ -150,14 +151,17 @@ class Host(object):
             cmd = 'cd %s;%s' % (j['dir'], cmd)
         return cmd
 
-    def status(self, quiet=0):
+    def status(self, quiet=0,jobs=None):
         """
         Returns all the jobs in the job queue which have completed.
         """
-        total = len(self.jobs)
+        if jobs==None:
+            jobs=self.jobs
+            
+        total = len(jobs)
         finished = []
         errors = []
-        for num, j in enumerate(self.jobs):
+        for num, j in enumerate(jobs):
             if j['status'] == 'F':
                 finished.append(num)
             elif j['status'] == 'X':
@@ -203,14 +207,13 @@ class InteractiveHost(Host):
     """
     def __init__(self, cpus=1, cpus_per_node=0):
         Host.__init__(self)
-        from multiprocessing import cpu_count
         if cpus <= 0:
             cpus = 1
         self.cpus = cpus
         if cpus_per_node:
             self.cpus_per_node = cpus_per_node
         else:
-            self.cpus_per_node = cpu_count()
+            self.cpus_per_node = multiprocessing.cpu_count()
         self.hostname = socket.gethostname()
         self.jobs = []
         
@@ -269,7 +272,6 @@ class InteractiveHost(Host):
                 if j['dir']:
                     cmd = 'cd %s && %s' % (j['dir'], cmd) #UNIX ; to &&
                 
-            
                 isdryrun=""
                 if dryrun:
                     isdryrun='--DRY RUN--' 
@@ -277,7 +279,7 @@ class InteractiveHost(Host):
                 jobstr+=datetime.datetime.now().ctime()
                 cpustr='CPUs provisioned: {}, {} remain free'.format(cpus,self._cpus_free)
                 borderstr='================================'
-                print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')                
+                print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')
                 
                 if dryrun:
                     cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
@@ -303,6 +305,8 @@ class InteractiveHost(Host):
                 self._monitor.start_job(j['cmd'], p.pid)
                                 
         self.wait(0)
+        sys.stdout.flush()
+        sys.stderr.flush()
 
     def process_waiter(self,popen,t_start=None):
         #http://stackoverflow.com/questions/100624
@@ -334,7 +338,7 @@ class InteractiveHost(Host):
                     #we're done messing with the shared vars. release the lock.
                     self._lock.release()
                     
-                    #substitute the time command from Host __init__
+                    #substitute the time command from Host __init__ and add a timestamp to .out file
                     f=open(j['outfile']+'.err','a')
                     f.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(
                         t_end-t_start))
@@ -350,7 +354,7 @@ class InteractiveHost(Host):
                 self._lock.release()
         
     def handle_error(self, stat, j,pid=-1):
-        str=40*'*' + '\n'
+        str=60*'x' + '\n'
         str+="ERROR (pid {}): {} returned {}\n".format(pid,j['cmd'], stat)
         try:
             for line in open(j['outfile']+'.err', 'r'):
@@ -359,17 +363,461 @@ class InteractiveHost(Host):
         except:
             pass
         str+="Stdout is in {}.out and stderr is in {}.err.\n".format(j['outfile'], j['outfile'])
-        str+=40*'*' + '\n'
+        str+=60*'x' + '\n'
         print(str)
     
-    #FR
     def wait(self,cpus):
         while len(self._running):
             time.sleep(0.1)
             if cpus and self._cpus_free >= cpus:
                 return
 
-class TestHost(Host):
+class InteractiveHostMP(Host):
+    """
+    This is a multiprocessing version of InteractiveHost. 
+    
+    Unlike InteractiveHost which
+    relies on launching separate python instances for each run, this class executes python
+    functions directly using the multiprocessing module and a process pool. This reduces
+    overhead significantly.
+    
+    - *cpus*: The number of cpus to assign to a single job.
+    - *cpus_per_node*: The total number of cpus to use. If *cpus*=1, then this parameter
+      is the number of concurrent jobs which will run on the machine.
+    """
+    
+    _numinstances=0
+    
+    _cpus=-1
+    _cpus_free=-1
+    _cpus_per_node=-1
+    _running={}
+    _run_num=-1
+    _jobs={}
+    
+    _lock=Lock()
+    
+    def __init__(self,cpus=1,cpus_per_node=0):
+        #only allow a single instance of InteractiveHostMP if there are jobs running.
+        if InteractiveHostMP._numinstances>=1 and len(InteractiveHostMP._running)>0:
+            raise Exception('Only one instance of InteractiveHostMP is allowed')
+        InteractiveHostMP._numinstances+=1            
+            
+        if cpus <= 0:
+            cpus = 1
+        InteractiveHostMP._cpus = cpus
+        if cpus_per_node:
+            InteractiveHostMP._cpus_per_node=cpus_per_node
+        else:
+            InteractiveHostMP._cpus_per_node = multiprocessing.cpu_count()
+        self.hostname = socket.gethostname()
+        
+        InteractiveHostMP._run_num=0
+        InteractiveHostMP._jobs={}
+        InteractiveHostMP._lock=Lock()
+        self._testProgramFunc=None
+        
+        #don't use inheritance since we only want some methods
+        self._host=Host()
+        
+    def close(self):
+        #don't use __del__. It doesn't work reliably
+        if len(InteractiveHostMP._running)>0:
+            raise Exception('Jobs are still running. Cannot close now')
+        else:
+            InteractiveHostMP._numinstances-=1
+        
+    def reinit(self):
+        InteractiveHostMP._jobs = {}
+
+    def add_jobs(self, fname, args):
+        #fname comes from sweeep.run
+        self.fname = fname
+        
+        #self.prog is set in sweep.__init__
+        if self.prog.func==None:
+            raise Exception('for InteractiveHostMP, TestProgram.func must be defined')
+            
+        self._testProgramFunc=self.prog.func
+        
+        #a is a generator object. each element is a 
+        #realization of the parameters (a list of tuples). On every loop
+        #iteration, a new realiztion is returned
+        #Called from psweep.run
+        for a in args:
+            output = '%s_%s' % (fname, InteractiveHostMP._run_num)
+            _dir = self.prog.setup(output)
+
+            if self.prog.paramsByFile:
+                cmd = self.prog.cmdByFile(a,_dir)
+            else:
+                cmd = self.prog.cmd(a) #prog is the testprogram. initialized from sweep.py
+            
+            self.add_job(self._testProgramFunc, _dir, 0, output,cmd)
+            
+    def add_job(self, func, dir, cpu, outfile,funcparams):
+        """
+        Adds jobs to the queue.
+
+        - *func* : python function to execute.
+        - *dir* : Directory to run the command in. '' is the default.
+        - *cpu* : CPUs to allocate for the job. Don't set this. Only used by scaling method.
+        - *outfile* : Output file basename.
+        - *paramdict*: list of parameters for *func* (in optparse format)
+        
+        """
+        if func==None:
+            raise Exception('add_job: func must be defined')
+        if self._testProgramFunc!=None and func!=self._testProgramFunc:
+            raise Exception('add_job: func must be the same for all jobs')
+        self._testProgramFunc=func
+        
+        if cpu == 0:
+            cpu = InteractiveHostMP._cpus
+        if dir:
+            dir = os.path.abspath(dir)
+        InteractiveHostMP._jobs[InteractiveHostMP._run_num]={ 'dir': dir,
+                                                              'cpu': cpu,
+                                                              'outfile': outfile,
+                                                              'status': 0,
+                                                              'args':funcparams}
+        InteractiveHostMP._run_num += 1
+        
+    def collect(self,hf):
+        #should be ok to use the version in Host
+        return Host.collect(self,hf)
+        
+    def status(self,quiet=0):
+        return Host.status(self,quiet,list(InteractiveHostMP._jobs.itervalues()))
+        
+    def run(self,dryrun=False):
+        if len(InteractiveHostMP._jobs)==0:
+            print('No jobs to run')
+            return False
+            
+        InteractiveHostMP._cpus_free = InteractiveHostMP._cpus_per_node
+        InteractiveHostMP._running = {}
+        self._monitor = TextMonitor()
+        
+        pool=multiprocessing.Pool()
+        
+        t_start=datetime.datetime.now()
+        print('Start: {}'.format(t_start.ctime()))
+        try:
+            self._run(pool,dryrun)
+            return True
+        except KeyboardInterrupt:
+            pool.terminate()
+            pool.join()
+            
+            print '***INTERRUPT***\n'
+            print "If you wish to resume, use 'puq resume'\n"
+            for jobnum in InteractiveHostMP._running:
+                j=InteractiveHostMP._jobs[jobnum]
+                j['status'] = 0
+            return False
+        finally:
+            pool.close()
+            pool.join()
+            t_end=datetime.datetime.now()
+            print('End: {}\tElapsed: {}'.format(t_end.ctime(),t_end-t_start))
+            
+    def _run(self,pool,dryrun=False):
+        # fix for some broken saved jobs
+        for jobnum,jobdata in InteractiveHostMP._jobs.iteritems():
+            if type(jobdata) == str or type(jobdata) == np.string_:
+                InteractiveHostMP._jobs[jobnum]=eval(jobdata)
+
+        errors = len([j for j in InteractiveHostMP._jobs.itervalues() if j['status'] == 'X'])
+        if errors:
+            print "Previous run had %d errors. Retrying." % errors
+
+        cwd=os.getcwd()
+        
+        for jobnum,j in InteractiveHostMP._jobs.iteritems():
+            if j['status'] == 0 or j['status'] == 'X':
+                cpus = min(j['cpu'], InteractiveHostMP._cpus)
+                
+                if cpus > InteractiveHostMP._cpus_free:
+                    self.wait(cpus)
+                InteractiveHostMP._cpus_free -= cpus
+                
+                t_start=time.clock()
+                job_info_args={'jobnum':jobnum, 'start_time':t_start}
+                job_other_args=shlex.split(j['args']) #j['args'] should be a string
+                
+                funcstr=str(self._testProgramFunc) + '\n'
+                funcstr+='Parameters: args={}, jobinfo={}'.format(job_other_args,job_info_args)
+                
+                isdryrun=""
+                if dryrun:
+                    isdryrun='--DRY RUN--' 
+                jobstr='Job {} of {} {}'.format(jobnum+1,len(InteractiveHostMP._jobs),isdryrun)
+                jobstr+=datetime.datetime.now().ctime()
+                cpustr='CPUs provisioned: {}, {} remain free'.format(cpus,InteractiveHostMP._cpus_free)
+                borderstr='================================'
+                s=borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n' + borderstr
+                
+                #sout.write(jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n')
+                self._write_stdio(jobnum,
+                    stdout_msg=jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n',mode='w')
+                
+                if dryrun:
+                    #write the output and timing info immediately
+                    InteractiveHostMP._write_stdio(jobnum,
+                        stdout_msg="HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(0),
+                        stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(time.clock()-t_start),
+                        mode='a')
+                    #sout.write("HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(0))
+                    #serr.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(time.clock()-t_start))
+                    #sout.close()
+                    #serr.close()
+                    
+                    InteractiveHostMP._lock.acquire()
+                    j['status']='F'
+                    print(s)
+                    InteractiveHostMP._lock.release()
+                else:
+                    #sout.close()
+                    #serr.close()
+                    
+                    #start an async job. When finished successfully (i.e., without exceptions),
+                    #the callback will be called.
+                    #
+                    #_testProgramFunc must not be a method of a class. It must be a standalone
+                    #function in a module.
+                    async_result=pool.apply_async(_InteractiveHostMP_run_testProgramFunc,
+                                                  kwds={'args':job_other_args,
+                                                        'jobinfo':job_info_args,
+                                                        'func':self._testProgramFunc,
+                                                        'stdout_file':j['outfile']+'.out',
+                                                        'stderr_file':j['outfile']+'.err',
+                                                        'workingdir':cwd,
+                                                        'jobworkingdir':j['dir']},
+                                                  callback=InteractiveHostMP._job_finished_callback)
+                                                  
+                    #if there is an exception, the callback WON'T be called. Therefore we need to
+                    #poll the job to see if it finished successfully. Use a separate thread.
+                    #If the call did in fact complete successfully, the waiter will complete
+                    #without doing anything.
+                    thread.start_new_thread(self._process_waiter,(jobnum,async_result,t_start,))
+                    
+                    InteractiveHostMP._lock.acquire()
+                    
+                    print(s)
+                    
+                    j['status'] = 'R' 
+                    self._running[jobnum]={'async_result':async_result, 'start_time':t_start}
+                    self._monitor.start_job(funcstr.replace('\n',' '), jobnum)
+                    
+                    InteractiveHostMP._lock.release()
+                #end if dryrun    
+            #end if j['status'] == 0 or j['status'] == 'X':
+                                                                    
+        #wait for all jobs in the pool to finish
+        pool.close()
+        pool.join()
+
+        #wait for callbacks and error handlers to finish before exiting
+        #1 sec should be enough of a wait since each process_waiter only
+        #sleeps for 0.1 sec
+        self.wait(0)
+        time.sleep(1.3)
+        InteractiveHostMP._lock.acquire()
+        InteractiveHostMP._lock.release()
+        
+        sys.stdout.flush()
+        sys.stderr.flush()
+    
+    @staticmethod
+    def _job_finished_callback(args):
+        #args is the return value of self._testProgramFunc. self._testProgramFunc must
+        #return the 'jobinfo' argument which was passed to in in apply_async
+        
+        #if this callback is called, the async function completed with no exceptions
+        jobnum=args['jobnum']
+        t_start=args['start_time']
+        #s='Job {} finished successfully. waited {} sec. Waiting for lock...\n'.format(jobnum,
+        #                        time.clock()-t_start)
+
+        t_start_lock=time.clock()
+        InteractiveHostMP._lock.acquire()
+        #s+='Lock acquired, waited {} sec\n'.format(time.clock()-t_start_lock)
+        
+        j=InteractiveHostMP._jobs[jobnum]
+        t_end=time.clock()
+        now=datetime.datetime.now().ctime()
+        
+        err=''
+        try:
+            InteractiveHostMP._write_stdio(jobnum,stdout_msg=now,
+                stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(t_end-t_start),
+                mode='a')
+        except Exception,e:
+            err='ERROR: could not write time data to output file .{}\n'.format(str(e))
+        
+        InteractiveHostMP._cpus_free+=j['cpu']
+        j['status']='F'
+        del InteractiveHostMP._running[jobnum]
+        
+        s='............................................................\n'
+        s+='Job {} completed but there was an error afterwards, {}.\n'.format(jobnum+1,now)
+        s+=err
+        s+='Elapsed: {} sec\n'.format(t_end-t_start)
+        s+='............................................................\n'
+
+        #only write if there was an error. Else the output gets too much
+        if err!='':
+            print(s)
+
+        InteractiveHostMP._lock.release()
+        
+    def _process_waiter(self,jobnum,async_result,t_start):
+        while not async_result.ready():
+            time.sleep(0.1)
+
+        #job has exited. was it successful? If so, then _jobfinished_callback ran.
+        #If not, then it wasn't called and we need to handle the error here
+        err=''
+        if not async_result.successful():
+            try:
+                #s='Job {} completed with ERRORS. waited {} sec.\n'.format(jobnum,
+                #                    time.clock()-t_start)
+                async_result.get()
+            except Exception:
+                #note this won't be the full traceback unfortunately...
+                #See http://stackoverflow.com/a/8708806
+                err=traceback.format_exc()
+            finally:
+                InteractiveHostMP._lock.acquire()
+                
+                j=InteractiveHostMP._jobs[jobnum]
+                t_end=time.clock()
+                now=datetime.datetime.now().ctime()
+            
+                try:
+                    InteractiveHostMP._write_stdio(jobnum,
+                        stdout_msg=now,
+                        stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(t_end-t_start),
+                        mode='a')
+                except Exception,e:
+                    err+='ERROR: could not write time data to output file {}\n'.format(str(e))
+                                
+                InteractiveHostMP._cpus_free+=j['cpu']
+                j['status']='X'
+                del InteractiveHostMP._running[jobnum]
+                
+                #s+='job {} total elapsed: {}\n'.format(jobnum,time.clock()-t_start)
+                self.handle_error(err,j,jobnum)
+                
+                InteractiveHostMP._lock.release()
+        else:
+            #job finished successfully. Do nothing here.
+            #print('job {} was successful'.format(jobnum))
+            pass
+    
+    def handle_error(self,err,j,jobnum):
+        s='\n' + 'x'*60 +'\n'
+        s+='Job {} completed with ERRORS, {}.\n'.format(jobnum+1,datetime.datetime.now().ctime())
+        s+='Elapsed: {} sec\n'.format(time.clock()-t_start)
+        s+=err
+        try:
+            for line in open(j['outfile']+'.err', 'r'):
+                if not re.match("HDF5:{'name':'time','value':([0-9.]+)", line):
+                    s+=line
+        except:
+            pass
+        s+='\n' + 'x'*60 + '\n'
+
+        print(s)
+        
+    @staticmethod
+    def _write_stdio(jobnum,stdout_msg=None,stderr_msg=None,mode='w'):
+        j=InteractiveHostMP._jobs[jobnum]
+        
+        sout_name=j['outfile']+'.out'
+        serr_name=j['outfile']+'.err'
+
+        sout = open(sout_name, mode)
+        serr = open(serr_name, mode)
+            
+        if stdout_msg!=None:
+            sout.write(stdout_msg)
+        if stderr_msg!=None:
+            serr.write(stderr_msg)
+            
+        sout.close()
+        serr.close()
+            
+    
+    def wait(self,cpus):
+        while len(InteractiveHostMP._running):
+            time.sleep(0.1)
+            if cpus and InteractiveHostMP._cpus_free >= cpus:
+                return
+                
+def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,stderr_file=None,
+                                           workingdir=None,jobworkingdir=None):
+    """
+    Used by InteractiveHostMP._run to call the test function while redirecting IO.
+    
+    All Python IO from func will be redirected to the indicated files. Note that
+    to capture IO from external programs, func will have to capture that IO and
+    output it to the redirected stdout and stderr using print statements or
+    by redirecting the streams when using Popen.
+    
+    This function must exist outside of a class so that is is callable by 
+    pool.apply_async. This function runs in a separate process.
+    """
+    if workingdir!=jobworkingdir and (workingdir==None or jobworkingdir==None):
+        raise Exception('workingdir and jobsworkingdir must be specified together')
+        
+    #workingdir is where puq expects the stdout and stderr files to be
+    try:
+        if workingdir!=None and workingdir!='':
+            os.chdir(workingdir)
+    except Exception,e:
+        raise Exception('Could not change working directory to {}'.format(wdir))
+        
+    try:
+        if type(stdout_file) is str and stdout_file!=stderr_file:
+            sys.stdout=open(stdout_file,'a')
+    except Exception,e:
+        raise Exception('Could not redirect stdout to "{}". {}'.format(stderr_file,str(e)))
+        
+    try:
+        if type(stderr_file) is str and stderr_file!=stdout_file:
+            sys.stderr=open(stderr_file,'a')
+    except Exception,e:
+        raise Exception('Could not redirect stderr to "{}". {}'.format(stdout_file,str(e)))
+        
+    try:
+        if type(stdout_file) is str and type(stderr_file) is str and stderr_file==stdout_file:
+            f=open(stdout_file,'a')
+            sys.stdout=f
+            sys.stderr=f
+    except Exception,e:
+        raise Exception('Could not redirect stdout and stderr to "{}". {}'.format(stdout_file,str(e)))
+    
+    #change to the job working directory after stdout and stderr have been redirected
+    try:
+        if jobworkingdir!=None and jobworkingdir!='':
+            os.chdir(jobworkingdir)
+    except Exception,e:
+        raise Exception('Could not change job working directory to {}'.format(wdir))
+        
+    r=func(**{'jobinfo':jobinfo,'args':args})
+    
+    sys.stdout.flush()
+    sys.stderr.flush()
+    if stdout_file!=None:
+        sys.stdout.close()
+    if stderr_file!=None:
+        sys.stderr.close()
+        
+    return r
+        
+class TestHost(Host):        
     def __init__(self, cpus=0, cpus_per_node=0, walltime='1:00:00', pack=1):
         raise Exception("This host is not supported")
         

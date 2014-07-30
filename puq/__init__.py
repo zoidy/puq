@@ -1,4 +1,4 @@
-from hosts import InteractiveHost
+from hosts import InteractiveHost,InteractiveHostMP
 from submithost import SubmitHost
 from montecarlo import MonteCarlo
 from lhs import LHS
