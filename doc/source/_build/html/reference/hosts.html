@@ -116,6 +116,21 @@ Default=all cpus.</li>
 </dd></dl>
 
 <dl class="class">
+<dt id="puq.InteractiveHostMP">
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">InteractiveHostMP</tt><big>(</big><em>cpus=1</em>, <em>cpus_per_node=0</em><big>)</big><a class="headerlink" href="#puq.InteractiveHostMP" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a multiprocessing version of InteractiveHost.</p>
+<p>Unlike InteractiveHost which
+relies on launching separate python instances for each run, this class executes python
+functions directly using the multiprocessing module and a process pool. This reduces
+overhead significantly.</p>
+<ul class="simple">
+<li><em>cpus</em>: The number of cpus to assign to a single job.</li>
+<li><em>cpus_per_node</em>: The total number of cpus to use. If <em>cpus</em> = 1, then this parameter
+is the number of concurrent jobs which will run on the machine.</li>
+</ul>
+</dd></dl>
+
+<dl class="class">
 <dt id="puq.PBSHost">
 <em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">PBSHost</tt><big>(</big><em>env</em>, <em>cpus=0</em>, <em>cpus_per_node=0</em>, <em>qname='standby'</em>, <em>walltime='1:00:00'</em>, <em>modules=''</em>, <em>pack=1</em>, <em>qlimit=200</em><big>)</big><a class="headerlink" href="#puq.PBSHost" title="Permalink to this definition">¶</a></dt>
 <dd><p>Queues jobs using the PBS batch scheduler.

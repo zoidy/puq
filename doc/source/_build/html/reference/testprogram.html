@@ -96,7 +96,7 @@
 <h1>TestProgram<a class="headerlink" href="#testprogram" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="puq.TestProgram">
-<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">TestProgram</tt><big>(</big><em>name=''</em>, <em>exe=''</em>, <em>newdir=False</em>, <em>infiles=''</em>, <em>desc=''</em>, <em>outfiles=''</em>, <em>paramsByFile=False</em><big>)</big><a class="headerlink" href="#puq.TestProgram" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">TestProgram</tt><big>(</big><em>name=''</em>, <em>exe=''</em>, <em>func=None</em>, <em>func_args=None</em>, <em>newdir=False</em>, <em>infiles=''</em>, <em>desc=''</em>, <em>outfiles=''</em>, <em>paramsByFile=False</em><big>)</big><a class="headerlink" href="#puq.TestProgram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class implementing a TestProgram object representing the
 simulation to run.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -113,6 +113,13 @@ An executable command template to run. Strings of
 the form &#8216;$var&#8217; are replaced with the value of <em>var</em>.
 See python template strings
 (<a class="reference external" href="http://docs.python.org/2/library/string.html#template-strings">http://docs.python.org/2/library/string.html#template-strings</a>)</p>
+</li>
+<li><p class="first"><strong>func</strong> &#8211;
+a python function to execute. If func is specified, name and exe are ignored.
+Note: func must be a module-level function. It cannot be in a class or another function.</p>
+</li>
+<li><p class="first"><strong>func_args</strong> &#8211;
+the arguments to the python function. See example 4.</p>
 </li>
 <li><p class="first"><strong>desc</strong> &#8211;
 Optional description of the test program.</p>
@@ -192,7 +199,21 @@ the parameter values passed to puq.</p>
 <span class="c"># with record-data type.</span>
 
 <span class="n">prog</span> <span class="o">=</span> <span class="n">TestProgram</span><span class="p">(</span><span class="n">exe</span><span class="o">=</span><span class="s">&#39;python ../rosen_prog.py --paramsFile=input_params.txt&#39;</span><span class="p">,</span>
-  <span class="n">newdir</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;Rosenbrock Function&#39;</span><span class="p">)</span>
+  <span class="n">newdir</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">paramsByFile</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s">&#39;Rosenbrock Function&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Example4:</p>
+<div class="highlight-python"><div class="highlight"><pre># Instead of running an executable or python script directly, can call a python function
+# instead. This results in much faster execution if the test program is a python scripty
+# since the overhead of starting a new python interpreter is eliminated.
+#
+# The equivalent of example 3 is given below. Note that rosen_prog must have a function
+# named &#39;run&#39; which takes in 3 arguments: stdout (string), stderr (string), args (string).
+# The argument &#39;args&#39; is the same string as would be passed when using exe (see example1)
+
+import rosen_prog
+prog=TestProgram(func=rosen_prog.run, func_args=&#39;--paramsFile=input_params.txt&#39;,
+  newdir=True, paramsByFile=True desc=&#39;Rosenbrock Function&#39;)
 </pre></div>
 </div>
 </dd></dl>

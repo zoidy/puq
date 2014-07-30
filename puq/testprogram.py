@@ -91,6 +91,7 @@ class TestProgram(object):
         newdir=True, paramsByFile=True, desc='Rosenbrock Function')
         
     Example4::
+
       # Instead of running an executable or python script directly, can call a python function
       # instead. This results in much faster execution if the test program is a python scripty
       # since the overhead of starting a new python interpreter is eliminated.
@@ -102,6 +103,7 @@ class TestProgram(object):
       import rosen_prog
       prog=TestProgram(func=rosen_prog.run, func_args='--paramsFile=input_params.txt',
         newdir=True, paramsByFile=True desc='Rosenbrock Function')
+        
     """
 
     def __init__(self, name='', exe='',func=None,func_args=None, newdir=False, infiles='', desc='', outfiles='',

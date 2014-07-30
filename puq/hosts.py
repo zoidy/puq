@@ -382,7 +382,7 @@ class InteractiveHostMP(Host):
     overhead significantly.
     
     - *cpus*: The number of cpus to assign to a single job.
-    - *cpus_per_node*: The total number of cpus to use. If *cpus*=1, then this parameter
+    - *cpus_per_node*: The total number of cpus to use. If *cpus* = 1, then this parameter
       is the number of concurrent jobs which will run on the machine.
     """
     
