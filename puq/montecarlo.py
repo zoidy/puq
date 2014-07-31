@@ -55,6 +55,8 @@ class MonteCarlo(PSweep):
                         #the first num samples are used
                         raise Exception("Expected {} samples for parameter {}, found {}".format(num,p.name,np.size(p.values)))
                 else:
+                    #if p is a ConstantParameter, p.values will all be the same number, which
+                    #is the behavior we want.
                     p.values = p.pdf.random(num)
 
     # Returns a list of name,value tuples

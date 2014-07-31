@@ -33,7 +33,7 @@ class Constant(object):
             raise ValueError("Constant value must be specified")
 
         if isinstance(value, np.ndarray):
-            val=value
+            val=np.r_[value[0]]
         else:
             val=np.r_[value]
     

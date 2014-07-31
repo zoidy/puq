@@ -547,7 +547,8 @@ class InteractiveHostMP(Host):
                 job_other_args=shlex.split(j['args']) #j['args'] should be a string
                 
                 funcstr=str(self._testProgramFunc) + '\n'
-                funcstr+='Parameters: args={}, jobinfo={}'.format(job_other_args,job_info_args)
+                funcstr+='Parameters: args={}, jobinfo={}\n'.format(job_other_args,job_info_args)
+                funcstr+='stdout: {} stderr:{}'.format(j['outfile']+'.out',j['outfile']+'.err')
                 
                 isdryrun=""
                 if dryrun:
@@ -558,7 +559,6 @@ class InteractiveHostMP(Host):
                 borderstr='================================'
                 s=borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n' + borderstr
                 
-                #sout.write(jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n')
                 self._write_stdio(jobnum,
                     stdout_msg=jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n',mode='w')
                 
@@ -568,19 +568,12 @@ class InteractiveHostMP(Host):
                         stdout_msg="HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(0),
                         stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(time.clock()-t_start),
                         mode='a')
-                    #sout.write("HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(0))
-                    #serr.write("HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(time.clock()-t_start))
-                    #sout.close()
-                    #serr.close()
                     
                     InteractiveHostMP._lock.acquire()
                     j['status']='F'
                     print(s)
                     InteractiveHostMP._lock.release()
-                else:
-                    #sout.close()
-                    #serr.close()
-                    
+                else:                    
                     #start an async job. When finished successfully (i.e., without exceptions),
                     #the callback will be called.
                     #
@@ -602,12 +595,18 @@ class InteractiveHostMP(Host):
                     #without doing anything.
                     thread.start_new_thread(self._process_waiter,(jobnum,async_result,t_start,))
                     
+                    # print('_run() jobnum {} wait for lock'.format(jobnum))
+                    # sys.stdout.flush()
                     InteractiveHostMP._lock.acquire()
+                    # print('_run() jobnum {} lock acquired'.format(jobnum))
                     
                     print(s)
+                    #sys.stdout.flush()
+                    #sys.stderr.flush()
                     
                     j['status'] = 'R' 
-                    self._running[jobnum]={'async_result':async_result, 'start_time':t_start}
+                    #InteractiveHostMP._running[jobnum]={'async_result':async_result, 'start_time':t_start}
+                    InteractiveHostMP._running[jobnum]=None
                     self._monitor.start_job(funcstr.replace('\n',' '), jobnum)
                     
                     InteractiveHostMP._lock.release()
@@ -615,62 +614,81 @@ class InteractiveHostMP(Host):
             #end if j['status'] == 0 or j['status'] == 'X':
                                                                     
         #wait for all jobs in the pool to finish
+        #print('waiting on pool close and join')
+        sys.stdout.flush()
         pool.close()
         pool.join()
 
         #wait for callbacks and error handlers to finish before exiting
         #1 sec should be enough of a wait since each process_waiter only
         #sleeps for 0.1 sec
-        self.wait(0)
-        time.sleep(1.3)
-        InteractiveHostMP._lock.acquire()
-        InteractiveHostMP._lock.release()
-        
+        #print('waiting on wait function')
         sys.stdout.flush()
-        sys.stderr.flush()
+        self.wait(0)
+        time.sleep(0.6)
+        #InteractiveHostMP._lock.acquire()
+        #InteractiveHostMP._lock.release()
+        
+
     
     @staticmethod
     def _job_finished_callback(args):
         #args is the return value of self._testProgramFunc. self._testProgramFunc must
         #return the 'jobinfo' argument which was passed to in in apply_async
         
+        #The callbacks are handled in the main process, but they're run in their own separate thread.
+        #See http://stackoverflow.com/questions/24770934
+        s=''
+        
         #if this callback is called, the async function completed with no exceptions
         jobnum=args['jobnum']
         t_start=args['start_time']
-        #s='Job {} finished successfully. waited {} sec. Waiting for lock...\n'.format(jobnum,
-        #                        time.clock()-t_start)
-
+        # s+='Job {} finished successfully. waited {} sec. Waiting for lock...\n'.format(jobnum,
+                                # time.clock()-t_start)
+        # print(s)
+        # sys.stdout.flush()
+        # s=''
+        
         t_start_lock=time.clock()
         InteractiveHostMP._lock.acquire()
-        #s+='Lock acquired, waited {} sec\n'.format(time.clock()-t_start_lock)
+        # s+='Job {} Lock acquired, waited {} sec\n'.format(jobnum,time.clock()-t_start_lock)
+        # print(s)
+        # sys.stdout.flush()
+        # s=''
         
-        j=InteractiveHostMP._jobs[jobnum]
-        t_end=time.clock()
-        now=datetime.datetime.now().ctime()
-        
-        err=''
-        try:
-            InteractiveHostMP._write_stdio(jobnum,stdout_msg=now,
-                stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(t_end-t_start),
-                mode='a')
-        except Exception,e:
-            err='ERROR: could not write time data to output file .{}\n'.format(str(e))
-        
-        InteractiveHostMP._cpus_free+=j['cpu']
-        j['status']='F'
-        del InteractiveHostMP._running[jobnum]
-        
-        s='............................................................\n'
-        s+='Job {} completed but there was an error afterwards, {}.\n'.format(jobnum+1,now)
-        s+=err
-        s+='Elapsed: {} sec\n'.format(t_end-t_start)
-        s+='............................................................\n'
+        try:            
+            j=InteractiveHostMP._jobs[jobnum]
+            t_end=time.clock()
+            now=datetime.datetime.now().ctime()
+            
+            err=''
+            try:
+                InteractiveHostMP._write_stdio(jobnum,stdout_msg=now,
+                    stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(t_end-t_start),
+                    mode='a')
+            except Exception,e:
+                err+='ERROR: could not write time data to output file.\n{}'.format(traceback.format_exc())
+            
+            try:
+                InteractiveHostMP._cpus_free+=j['cpu']                
+                del InteractiveHostMP._running[jobnum]
+            except Exception,e:
+                err+='ERROR: could not finish updating job queue.\n{}'.format(traceback.format_exc())         
 
-        #only write if there was an error. Else the output gets too much
-        if err!='':
-            print(s)
-
-        InteractiveHostMP._lock.release()
+            #only write if there was an error. Else the output gets too much
+            if err!='':
+                j['status']='X'
+                s+='............................................................\n'
+                s+='Job {} completed but there was an error afterwards, {}.\n'.format(jobnum+1,now)
+                s+=err
+                s+='Elapsed: {} sec\n'.format(t_end-t_start)
+                s+='............................................................\n'
+                print(s)
+            else:
+                j['status']='F'
+        finally:
+            InteractiveHostMP._lock.release()
+            #print('Job {} lock released.'.format(jobnum))
         
     def _process_waiter(self,jobnum,async_result,t_start):
         while not async_result.ready():
@@ -701,14 +719,14 @@ class InteractiveHostMP(Host):
                         stderr_msg="HDF5:{{'name':'time','value':{},'desc':''}}:5FDH".format(t_end-t_start),
                         mode='a')
                 except Exception,e:
-                    err+='ERROR: could not write time data to output file {}\n'.format(str(e))
+                    err+='ERROR: could not write time data to output file.\n{}'.format(traceback.format_exc())
                                 
                 InteractiveHostMP._cpus_free+=j['cpu']
                 j['status']='X'
                 del InteractiveHostMP._running[jobnum]
                 
                 #s+='job {} total elapsed: {}\n'.format(jobnum,time.clock()-t_start)
-                self.handle_error(err,j,jobnum)
+                self.handle_error(err,j,jobnum,t_start)
                 
                 InteractiveHostMP._lock.release()
         else:
@@ -716,7 +734,7 @@ class InteractiveHostMP(Host):
             #print('job {} was successful'.format(jobnum))
             pass
     
-    def handle_error(self,err,j,jobnum):
+    def handle_error(self,err,j,jobnum,t_start):
         s='\n' + 'x'*60 +'\n'
         s+='Job {} completed with ERRORS, {}.\n'.format(jobnum+1,datetime.datetime.now().ctime())
         s+='Elapsed: {} sec\n'.format(time.clock()-t_start)
@@ -751,8 +769,16 @@ class InteractiveHostMP(Host):
             
     
     def wait(self,cpus):
+        count=0
         while len(InteractiveHostMP._running):
             time.sleep(0.1)
+            if not cpus:
+                print(len(InteractiveHostMP._running),
+                    [j for j in InteractiveHostMP._jobs.keys() if InteractiveHostMP._jobs[j]['status']=='R'],
+                    InteractiveHostMP._cpus_free,cpus)
+                if count>7:
+                    raise Exception('Argh')
+                count+=1
             if cpus and InteractiveHostMP._cpus_free >= cpus:
                 return
                 
@@ -778,7 +804,7 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
             os.chdir(workingdir)
     except Exception,e:
         raise Exception('Could not change working directory to {}'.format(wdir))
-        
+    
     try:
         if type(stdout_file) is str and stdout_file!=stderr_file:
             sys.stdout=open(stdout_file,'a')
@@ -805,7 +831,10 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
             os.chdir(jobworkingdir)
     except Exception,e:
         raise Exception('Could not change job working directory to {}'.format(wdir))
-        
+    
+    #j=InteractiveHostMP._jobs[jobinfo['jobnum']]
+    #j['status']='R'
+    
     r=func(**{'jobinfo':jobinfo,'args':args})
     
     sys.stdout.flush()
@@ -814,7 +843,7 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
         sys.stdout.close()
     if stderr_file!=None:
         sys.stderr.close()
-        
+
     return r
         
 class TestHost(Host):        
