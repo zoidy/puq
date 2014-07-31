@@ -562,6 +562,11 @@ class InteractiveHostMP(Host):
                 self._write_stdio(jobnum,
                     stdout_msg=jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n',mode='w')
                 
+                InteractiveHostMP._lock.acquire()
+                j['status']='R'
+                InteractiveHostMP._running[jobnum]=None
+                InteractiveHostMP._lock.release()
+                
                 if dryrun:
                     #write the output and timing info immediately
                     InteractiveHostMP._write_stdio(jobnum,
@@ -597,19 +602,18 @@ class InteractiveHostMP(Host):
                     
                     # print('_run() jobnum {} wait for lock'.format(jobnum))
                     # sys.stdout.flush()
-                    InteractiveHostMP._lock.acquire()
+                    #InteractiveHostMP._lock.acquire()
                     # print('_run() jobnum {} lock acquired'.format(jobnum))
                     
                     print(s)
                     #sys.stdout.flush()
                     #sys.stderr.flush()
                     
-                    j['status'] = 'R' 
-                    #InteractiveHostMP._running[jobnum]={'async_result':async_result, 'start_time':t_start}
-                    InteractiveHostMP._running[jobnum]=None
+                    #j['status'] = 'R'                     
+                    #InteractiveHostMP._running[jobnum]=None
                     self._monitor.start_job(funcstr.replace('\n',' '), jobnum)
                     
-                    InteractiveHostMP._lock.release()
+                    #InteractiveHostMP._lock.release()
                 #end if dryrun    
             #end if j['status'] == 0 or j['status'] == 'X':
                                                                     
@@ -624,8 +628,8 @@ class InteractiveHostMP(Host):
         #sleeps for 0.1 sec
         #print('waiting on wait function')
         sys.stdout.flush()
-        self.wait(0)
         time.sleep(0.6)
+        self.wait(0)        
         #InteractiveHostMP._lock.acquire()
         #InteractiveHostMP._lock.release()
         
@@ -772,15 +776,17 @@ class InteractiveHostMP(Host):
         count=0
         while len(InteractiveHostMP._running):
             time.sleep(0.1)
+            if cpus and InteractiveHostMP._cpus_free >= cpus:
+                return
+            #this if tests for a race condition at the end of the run. 
+            #Can comment out if condition is not observed after a while
             if not cpus:
                 print(len(InteractiveHostMP._running),
                     [j for j in InteractiveHostMP._jobs.keys() if InteractiveHostMP._jobs[j]['status']=='R'],
                     InteractiveHostMP._cpus_free,cpus)
-                if count>7:
-                    raise Exception('Argh')
+                if count>10:                    
+                    raise Exception("DEBUG. You shouldn't see this error.")
                 count+=1
-            if cpus and InteractiveHostMP._cpus_free >= cpus:
-                return
                 
 def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,stderr_file=None,
                                            workingdir=None,jobworkingdir=None):
