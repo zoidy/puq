@@ -212,6 +212,9 @@ class InteractiveHost(Host):
         self.cpus = cpus
         if cpus_per_node:
             self.cpus_per_node = cpus_per_node
+            if cpus_per_node>multiprocessing.cpu_count():
+                print('Warning: the number of parallel jobs requested is greater than the number of'+
+                      ' cpus on this machine')
         else:
             self.cpus_per_node = multiprocessing.cpu_count()
         self.hostname = socket.gethostname()
@@ -272,14 +275,7 @@ class InteractiveHost(Host):
                 if j['dir']:
                     cmd = 'cd %s && %s' % (j['dir'], cmd) #UNIX ; to &&
                 
-                isdryrun=""
-                if dryrun:
-                    isdryrun='--DRY RUN--' 
-                jobstr='Job {} of {} {}'.format(count,len(self.jobs),isdryrun)
-                jobstr+=datetime.datetime.now().ctime()
-                cpustr='CPUs provisioned: {}, {} remain free'.format(cpus,self._cpus_free)
-                borderstr='================================'
-                print(borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + cmd +'\n')
+                self._monitor.start_job(cmd,count,len(self.jobs),dryrun,cpus,self._cpus_free,True,False)
                 
                 if dryrun:
                     cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
@@ -295,7 +291,7 @@ class InteractiveHost(Host):
                 t_start=time.clock()
                 p = Popen(cmd , shell=True, stdout=sout, stderr=serr)
                 
-                print('pid: {}\n{}\n'.format(p.pid,borderstr))
+                vprint(2,'pid: {}\n{}\n'.format(p.pid,'================================'))
                 count+=1
                 
                 thread.start_new_thread(self.process_waiter,(p,t_start,))
@@ -408,6 +404,9 @@ class InteractiveHostMP(Host):
         InteractiveHostMP._cpus = cpus
         if cpus_per_node:
             InteractiveHostMP._cpus_per_node=cpus_per_node
+            if cpus_per_node>multiprocessing.cpu_count():
+                print('Warning: the number of parallel jobs requested is greater than the number of'+
+                      ' cpus on this machine')
         else:
             InteractiveHostMP._cpus_per_node = multiprocessing.cpu_count()
         self.hostname = socket.gethostname()
@@ -499,7 +498,7 @@ class InteractiveHostMP(Host):
         InteractiveHostMP._running = {}
         self._monitor = TextMonitor()
         
-        pool=multiprocessing.Pool()
+        pool=multiprocessing.Pool(processes=InteractiveHostMP._cpus_per_node)
         
         t_start=datetime.datetime.now()
         print('Start: {}'.format(t_start.ctime()))
@@ -550,22 +549,14 @@ class InteractiveHostMP(Host):
                 funcstr+='Parameters: args={}, jobinfo={}\n'.format(job_other_args,job_info_args)
                 funcstr+='stdout: {} stderr:{}'.format(j['outfile']+'.out',j['outfile']+'.err')
                 
-                isdryrun=""
-                if dryrun:
-                    isdryrun='--DRY RUN--' 
-                jobstr='Job {} of {} {}'.format(jobnum+1,len(InteractiveHostMP._jobs),isdryrun)
-                jobstr+=datetime.datetime.now().ctime()
-                cpustr='CPUs provisioned: {}, {} remain free'.format(cpus,InteractiveHostMP._cpus_free)
-                borderstr='================================'
-                s=borderstr +'\n' + jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n' + borderstr
-                
-                self._write_stdio(jobnum,
-                    stdout_msg=jobstr + '\n' + cpustr + '\n\n' + funcstr +'\n',mode='w')
-                
                 InteractiveHostMP._lock.acquire()
                 j['status']='R'
                 InteractiveHostMP._running[jobnum]=None
+                s=self._monitor.start_job(funcstr,jobnum+1,len(InteractiveHostMP._jobs),dryrun,
+                                          cpus,InteractiveHostMP._cpus_free)
                 InteractiveHostMP._lock.release()
+                
+                self._write_stdio(jobnum,stdout_msg=s)
                 
                 if dryrun:
                     #write the output and timing info immediately
@@ -576,7 +567,6 @@ class InteractiveHostMP(Host):
                     
                     InteractiveHostMP._lock.acquire()
                     j['status']='F'
-                    print(s)
                     InteractiveHostMP._lock.release()
                 else:                    
                     #start an async job. When finished successfully (i.e., without exceptions),
@@ -599,21 +589,7 @@ class InteractiveHostMP(Host):
                     #If the call did in fact complete successfully, the waiter will complete
                     #without doing anything.
                     thread.start_new_thread(self._process_waiter,(jobnum,async_result,t_start,))
-                    
-                    # print('_run() jobnum {} wait for lock'.format(jobnum))
-                    # sys.stdout.flush()
-                    #InteractiveHostMP._lock.acquire()
-                    # print('_run() jobnum {} lock acquired'.format(jobnum))
-                    
-                    print(s)
-                    #sys.stdout.flush()
-                    #sys.stderr.flush()
-                    
-                    #j['status'] = 'R'                     
-                    #InteractiveHostMP._running[jobnum]=None
-                    self._monitor.start_job(funcstr.replace('\n',' '), jobnum)
-                    
-                    #InteractiveHostMP._lock.release()
+
                 #end if dryrun    
             #end if j['status'] == 0 or j['status'] == 'X':
                                                                     
@@ -630,9 +606,6 @@ class InteractiveHostMP(Host):
         sys.stdout.flush()
         time.sleep(0.6)
         self.wait(0)        
-        #InteractiveHostMP._lock.acquire()
-        #InteractiveHostMP._lock.release()
-        
 
     
     @staticmethod
