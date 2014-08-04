@@ -15,7 +15,8 @@ class TextMonitor(Monitor):
     def __init__(self):
         self._time_ref=datetime.datetime.now()
         
-    def start_job(self, cmd, currjob,numjobs,dryrun,cpus,cpus_free,topborder=True,bottomborder=True):
+    def start_job(self, cmd, currjob,numjobs,dryrun,cpus,cpus_free,topborder=True,bottomborder=True,
+                  return_jobcpustr=False):
         isdryrun=""
         borderstr='================================'
         topborderstr=''
@@ -48,4 +49,8 @@ class TextMonitor(Monitor):
                 sys.stdout.write('\r{}/{}\n'.format(currjob,numjobs))
                 sys.stdout.flush()
         
-        return printstr
+        #return the printed string. Else return the jobstr and cpustr (used by InteractiveHost)
+        if not return_jobcpustr:
+            return printstr
+        else:
+            return jobstr,cpustr

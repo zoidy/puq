@@ -14,6 +14,7 @@ from jobqueue import JobQueue
 from subprocess import Popen, PIPE
 import numpy as np
 from puq.options import options
+from util import vprint
 from shutil import rmtree
 
 # fixme: how about supporting Host(name) where name is looked up in a host database?
@@ -275,7 +276,8 @@ class InteractiveHost(Host):
                 if j['dir']:
                     cmd = 'cd %s && %s' % (j['dir'], cmd) #UNIX ; to &&
                 
-                self._monitor.start_job(cmd,count,len(self.jobs),dryrun,cpus,self._cpus_free,True,False)
+                jobstr,cpustr=self._monitor.start_job(cmd,count,len(self.jobs),dryrun,cpus,
+                                                      self._cpus_free,True,False,True)
                 
                 if dryrun:
                     cmd="echo HDF5:{{'name': 'DRY_RUN', 'value': {}, 'desc': '--DRY RUN--'}}:5FDH".format(count)
@@ -298,7 +300,6 @@ class InteractiveHost(Host):
                 
                 j['status'] = 'R' 
                 self._running.append((p, j))
-                self._monitor.start_job(j['cmd'], p.pid)
                                 
         self.wait(0)
         sys.stdout.flush()
