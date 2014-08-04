@@ -4,7 +4,7 @@ from montecarlo import MonteCarlo
 from lhs import LHS
 from morris import Morris
 from options import options
-from parameter import Parameter, NormalParameter, WeibullParameter, RayleighParameter, ExponParameter, CustomParameter, UniformParameter, DParameter, ConstantParameter
+from parameter import Parameter, NormalParameter, WeibullParameter, RayleighParameter, ExponParameter, CustomParameter, UniformParameter, DParameter, ConstantParameter, TriangParameter
 from smolyak import Smolyak
 from scaling import Scaling
 from sweep import Sweep

@@ -6,7 +6,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 '''
-from puq.pdf import NormalPDF, UniformPDF, ExperimentalPDF, WeibullPDF, RayleighPDF, ExponPDF, PDF
+from puq.pdf import NormalPDF, UniformPDF, ExperimentalPDF, WeibullPDF, RayleighPDF, ExponPDF, PDF,TrianglePDF
 from puq.constant import Constant
 from logging import debug
 import sys, matplotlib, sympy
@@ -245,6 +245,38 @@ class ExponParameter(Parameter):
     # This is what you see when the object is printed
     def __str__(self):
         return "ExponParameter %s (%s)\n\t%s" % (self.name, self.description, self.pdf.__str__())
+        
+class TriangParameter(Parameter):
+    '''
+    Class implementing a Parameter with an Triangular distribution.
+
+    Args:
+      name: Name of the parameter. This should be a short name,
+        like a variable.
+      description:  A longer description of the parameter.
+      kwargs: Keyword args.  Valid args are:
+
+        ======== ================================
+        Arg      Description
+        ======== ================================
+        min      The minimum value.
+        mode     The modal value.
+        max      The maximum value
+        ======== ================================
+        
+    .. seealso::
+       :class:`TrianglePDF`
+    '''
+    def __init__(self, name, description, **kwargs):
+        debug("name:%s desc:%s kwargs:%s" % (name, description, kwargs))
+        self.name = self.check_name(name)
+        self.description = description
+        self.caldata = kwargs.pop('caldata', None)
+        self.pdf = TrianglePDF(**kwargs)
+
+    # This is what you see when the object is printed
+    def __str__(self):
+        return "TriangParameter %s (%s)\n\t%s" % (self.name, self.description, self.pdf.__str__())
 
 class WeibullParameter(Parameter):
     '''
