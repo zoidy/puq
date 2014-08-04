@@ -465,6 +465,58 @@ Keyword args.  Valid args are:</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="puq.TriangParameter">
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">TriangParameter</tt><big>(</big><em>name</em>, <em>description</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#puq.TriangParameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class implementing a Parameter with an Triangular distribution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last">
+<li><p class="first"><strong>name</strong> &#8211;
+Name of the parameter. This should be a short name,
+like a variable.</p>
+</li>
+<li><p class="first"><strong>description</strong> &#8211;
+A longer description of the parameter.</p>
+</li>
+<li><p class="first"><strong>kwargs</strong> &#8211;
+Keyword args.  Valid args are:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Arg</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>min</td>
+<td>The minimum value.</td>
+</tr>
+<tr class="row-odd"><td>mode</td>
+<td>The modal value.</td>
+</tr>
+<tr class="row-even"><td>max</td>
+<td>The maximum value</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="pdf.html#puq.TrianglePDF" title="puq.TrianglePDF"><tt class="xref py py-class docutils literal"><span class="pre">TrianglePDF</span></tt></a></p>
+</div>
+</dd></dl>
+
+<dl class="class">
 <dt id="puq.ConstantParameter">
 <em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">ConstantParameter</tt><big>(</big><em>name</em>, <em>description</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#puq.ConstantParameter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Class implementing a Parameter which is a constant. When
