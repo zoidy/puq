@@ -657,10 +657,14 @@ class InteractiveHostMP(Host):
             if err!='':
                 j['status']='X'
                 s+='............................................................\n'
-                s+='Job {} completed but there was an error afterwards, {}.\n'.format(jobnum+1,now)
+                s+='Job {} of {} completed but there was an error afterwards, {}.\n'.format(jobnum+1,
+                            len(InteractiveHostMP._jobs),now)
                 s+=err
                 s+='Elapsed: {} sec\n'.format(t_end-t_start)
                 s+='............................................................\n'
+                
+                InteractiveHostMP._write_stdio(jobnum,stderr_msg=s,mode='a')
+                
                 print(s)
             else:
                 j['status']='F'
@@ -714,7 +718,8 @@ class InteractiveHostMP(Host):
     
     def handle_error(self,err,j,jobnum,t_start):
         s='\n' + 'x'*60 +'\n'
-        s+='Job {} completed with ERRORS, {}.\n'.format(jobnum+1,datetime.datetime.now().ctime())
+        s+='Job {} of {} completed with ERRORS, {}.\n'.format(jobnum+1,len(InteractiveHostMP._jobs),
+                    datetime.datetime.now().ctime())
         s+='Elapsed: {} sec\n'.format(time.clock()-t_start)
         s+=err
         try:
@@ -724,6 +729,8 @@ class InteractiveHostMP(Host):
         except:
             pass
         s+='\n' + 'x'*60 + '\n'
+        
+        InteractiveHostMP._write_stdio(jobnum,stderr_msg=s,mode='a')
 
         print(s)
         
@@ -733,17 +740,15 @@ class InteractiveHostMP(Host):
         
         sout_name=j['outfile']+'.out'
         serr_name=j['outfile']+'.err'
-
-        sout = open(sout_name, mode)
-        serr = open(serr_name, mode)
-            
+        
         if stdout_msg!=None:
+            sout = open(sout_name, mode)
             sout.write(stdout_msg)
+            sout.close()
         if stderr_msg!=None:
+            serr = open(serr_name, mode)
             serr.write(stderr_msg)
-            
-        sout.close()
-        serr.close()
+            serr.close()
             
     
     def wait(self,cpus):
