@@ -1550,7 +1550,7 @@ class MyApp:
         self.errors = errors
         parent.protocol('WM_DELETE_WINDOW', root.quit)
         
-        root.geometry("900x630")
+        root.geometry("950x630")
 
         tbar = Frame(parent)
         tbar.pack(side=TOP, anchor='w')
