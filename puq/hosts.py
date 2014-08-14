@@ -773,7 +773,7 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
     Used by InteractiveHostMP._run to call the test function while redirecting IO.
     
     All Python IO from func will be redirected to the indicated files. Note that
-    to capture IO from external programs, func will have to capture that IO and
+    to capture IO from non-python programs, func will have to capture that IO and
     output it to the redirected stdout and stderr using print statements or
     by redirecting the streams when using Popen.
     
@@ -817,19 +817,18 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
     except Exception,e:
         raise Exception('Could not change job working directory to {}'.format(wdir))
     
-    #j=InteractiveHostMP._jobs[jobinfo['jobnum']]
-    #j['status']='R'
-    
-    r=func(**{'jobinfo':jobinfo,'args':args})
-    
-    sys.stdout.flush()
-    sys.stderr.flush()
-    if stdout_file!=None:
-        sys.stdout.close()
-    if stderr_file!=None:
-        sys.stderr.close()
+    try:
+        r=func(**{'jobinfo':jobinfo,'args':args})
+        return r
+    finally:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        if stdout_file!=None:
+            sys.stdout.close()
+        if stderr_file!=None:
+            sys.stderr.close()
 
-    return r
+        
         
 class TestHost(Host):        
     def __init__(self, cpus=0, cpus_per_node=0, walltime='1:00:00', pack=1):
