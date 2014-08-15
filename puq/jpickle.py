@@ -31,6 +31,16 @@ try:
 except:
     pass
 
+#for InteractiveHostMP
+import multiprocessing.queues
+class SimpleQueueHandler(jsonpickle.handlers.BaseHandler):
+        def flatten(self,obj,data):
+            data['value']=None
+            return data
+        def restore(self,obj):
+            return obj['value']            
+jsonpickle.handlers.registry.register(multiprocessing.queues.SimpleQueue,SimpleQueueHandler)
+
 class NumpyFloatHandler(jsonpickle.handlers.BaseHandler):
     def flatten(self, obj, data):
         return float(obj)
@@ -91,8 +101,8 @@ class RbfHandler(jsonpickle.handlers.BaseHandler):
         return obj
 jsonpickle.handlers.registry.register(Rbf, RbfHandler)
 
-def pickle(obj):
-    return jsonpickle.encode(obj)
+def pickle(obj,max_depth=None):
+    return jsonpickle.encode(obj,max_depth=max_depth)
 
 def unpickle(st):
     obj = jsonpickle.decode(str(st))

@@ -381,6 +381,8 @@ class InteractiveHostMP(Host):
     - *cpus*: The number of cpus to assign to a single job.
     - *cpus_per_node*: The total number of cpus to use. If *cpus* = 1, then this parameter
       is the number of concurrent jobs which will run on the machine.
+    - *proc_pool*: An externally created multiprocessing.Pool to use as the process pool. If
+      not specified, a new pool will be created.
     """
     
     _numinstances=0
@@ -394,7 +396,7 @@ class InteractiveHostMP(Host):
     
     _lock=Lock()
     
-    def __init__(self,cpus=1,cpus_per_node=0):
+    def __init__(self,cpus=1,cpus_per_node=0,proc_pool=None):
         #only allow a single instance of InteractiveHostMP if there are jobs running.
         if InteractiveHostMP._numinstances>=1 and len(InteractiveHostMP._running)>0:
             raise Exception('Only one instance of InteractiveHostMP is allowed')
@@ -416,6 +418,7 @@ class InteractiveHostMP(Host):
         InteractiveHostMP._jobs={}
         InteractiveHostMP._lock=Lock()
         self._testProgramFunc=None
+        self._pool=proc_pool
         
         #don't use inheritance since we only want some methods
         self._host=Host()
@@ -499,7 +502,10 @@ class InteractiveHostMP(Host):
         InteractiveHostMP._running = {}
         self._monitor = TextMonitor()
         
-        pool=multiprocessing.Pool(processes=InteractiveHostMP._cpus_per_node)
+        if self._pool==None:
+            pool=multiprocessing.Pool(processes=InteractiveHostMP._cpus_per_node)
+        else:
+            pool=self._pool
         
         t_start=datetime.datetime.now()
         print('Start: {}'.format(t_start.ctime()))
@@ -517,8 +523,9 @@ class InteractiveHostMP(Host):
                 j['status'] = 0
             return False
         finally:
-            pool.close()
-            pool.join()
+            if self._pool==None:
+                pool.close()
+                pool.join()
             t_end=datetime.datetime.now()
             print('End: {}\tElapsed: {}'.format(t_end.ctime(),t_end-t_start))
             
@@ -597,8 +604,9 @@ class InteractiveHostMP(Host):
         #wait for all jobs in the pool to finish
         #print('waiting on pool close and join')
         sys.stdout.flush()
-        pool.close()
-        pool.join()
+        if self._pool==None:
+            pool.close()
+            pool.join()
 
         #wait for callbacks and error handlers to finish before exiting
         #1 sec should be enough of a wait since each process_waiter only
