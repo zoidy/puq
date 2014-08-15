@@ -614,6 +614,10 @@ class InteractiveHostMP(Host):
         #print('waiting on wait function')
         sys.stdout.flush()
         time.sleep(0.6)
+        
+        #really make sure that all callbacks and waiters are finished
+        #code wont proceed past this point untill the list of running jobs
+        #is empty.
         self.wait(0)        
 
     
