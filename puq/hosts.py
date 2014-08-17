@@ -420,6 +420,9 @@ class InteractiveHostMP(Host):
         self._testProgramFunc=None
         self._pool=proc_pool
         
+        #for pickling purposes
+        self.jobs=InteractiveHostMP._jobs
+        
         #don't use inheritance since we only want some methods
         self._host=Host()
         

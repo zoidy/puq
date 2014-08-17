@@ -81,7 +81,7 @@ class Sweep(object):
             del h5['private']
 
         hp = h5.require_group('private')
-        hp['sweep'] = pickle(self,max_depth=5)
+        hp['sweep'] = pickle(self,max_depth=6)
 
         # in /input write the input params in json and regular arrays
         h = h5.require_group('input')

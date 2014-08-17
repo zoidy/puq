@@ -213,6 +213,17 @@ def analyze(*args):
             del h5['/output/data']
         errors = sweep.analyze(opt.v)
 
+    #check jobs for errors
+    if type(sweep.host.jobs) is dict:
+        #key is jobnum, value is dict
+        for jobnum,jobdata in sweep.host.jobs.iteritems():
+            if jobdata['status']=='X':
+                errors+=1
+    if type(sweep.host.jobs) is list:
+        for j in sweep.host.jobs:
+            if j['status']=='X':
+                errors+=1
+        
     if opt.psamples and 'psamples' in h5:
         # FIXME: delete pdfs too!
         # FIXME check that this works.  or do we need it?
