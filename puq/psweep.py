@@ -24,6 +24,11 @@ class PSweep(object):
         the host object job list. Then tells the host to run.  After
         all jobs have completed, collect the data and call analyze().
         If iteration_cb is defined, call it.
+        
+        The callback must take two parameters. The first one is the *sweep* object,
+        the second is the handle to the hdf5 file of the run. It must return a boolean. If True
+        is returned, the sweep is over. If false, the sweep parameters may be
+        changed and it will continue.
 
         Returns True on success.
         """
