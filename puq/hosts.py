@@ -118,8 +118,8 @@ class Host(object):
                     dname = '%s_%s' % (self.fname, j)
                     try:
                         rmtree(dname)
-                    except:
-                        pass
+                    except Exception,e:
+                        vprint(1,'could not delete directory. {}'.format(dname,str(e)))
         return finished_jobs
 
     @staticmethod

@@ -3,8 +3,8 @@
 """
 PUQ Analysis Tool
 
-Martin Hunt
-Purdue University
+Martin Hunt, Fernando Rios
+Purdue University, SUNY Buffalo
 
 This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
