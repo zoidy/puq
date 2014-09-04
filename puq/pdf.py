@@ -54,12 +54,16 @@ class PDF(object):
 
         self.x = xvals
         self.cdfy = np.append([0.0], np.cumsum((np.diff(yvals)/2.0 + yvals[:-1])*np.diff(xvals)))
+        if self.cdfy[-1]==0:
+            self.cdfy[-1]=1e-15
         self.cdfy /= self.cdfy[-1]
 
         # Trim tails that have grown to 10% of the range of the PDF
         resample = False
         mmin, mmax = self.ppf([0, 1])
         dist = mmax - mmin
+        if dist==0:
+            dist=1e-15
         #print "range of pdf = [%s - %s]" % (mmin, mmax)
         #print "range of PDF = [%s - %s]" % (xvals[0], xvals[-1])
         #print "dist=%s" % dist
@@ -89,11 +93,17 @@ class PDF(object):
         if resample:
             self.x = np.linspace(mmin, mmax, nsamp)
             self.y = np.interp(self.x, xvals, yvals)
-            self.y = np.abs(self.y / trapz(self.y, self.x))
+            tz=trapz(self.y, self.x)
+            if tz==0:
+                tz=1e-15
+            self.y = np.abs(self.y / tz)
             self.cdfy = np.append([0.0], np.cumsum((np.diff(self.y)/2.0 + self.y[:-1])*np.diff(self.x)))
         else:
             # normalize (integral must be 1.0)
-            self.y = yvals / trapz(yvals, self.x)
+            tz=trapz(yvals, self.x)
+            if tz==0:
+                tz=1e-15
+            self.y = yvals / tz
 
         self.mean = trapz(self.x * self.y, self.x)
         self.dev = np.sqrt(np.abs(trapz(self.y * (self.x - self.mean)**2, self.x)))
