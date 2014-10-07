@@ -371,7 +371,8 @@ class InteractiveHost(Host):
 
 class InteractiveHostMP(Host):
     """
-    This is a multiprocessing version of InteractiveHost. 
+    This is a multiprocessing version of InteractiveHost.  It can only be used when using
+    a python function as the test program. See example 4 of :class:`TestProgram`.
     
     Unlike InteractiveHost which
     relies on launching separate python instances for each run, this class executes python

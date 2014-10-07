@@ -112,11 +112,13 @@ no <em>exe</em> is defined.</p>
 An executable command template to run. Strings of
 the form &#8216;$var&#8217; are replaced with the value of <em>var</em>.
 See python template strings
-(<a class="reference external" href="http://docs.python.org/2/library/string.html#template-strings">http://docs.python.org/2/library/string.html#template-strings</a>)</p>
+(<a class="reference external" href="http://docs.python.org/2/library/string.html#template-strings">http://docs.python.org/2/library/string.html#template-strings</a>).
+Can be used with any host EXCEPT <a class="reference internal" href="hosts.html#puq.InteractiveHostMP" title="puq.InteractiveHostMP"><tt class="xref py py-class docutils literal"><span class="pre">InteractiveHostMP</span></tt></a>.</p>
 </li>
 <li><p class="first"><strong>func</strong> &#8211;
 a python function to execute. If func is specified, name and exe are ignored.
-Note: func must be a module-level function. It cannot be in a class or another function.</p>
+Note: func must be a module-level function. It cannot be in a class or another function.
+Can only be used with <a class="reference internal" href="hosts.html#puq.InteractiveHostMP" title="puq.InteractiveHostMP"><tt class="xref py py-class docutils literal"><span class="pre">InteractiveHostMP</span></tt></a>.</p>
 </li>
 <li><p class="first"><strong>func_args</strong> &#8211;
 the arguments to the python function. See example 4.</p>
@@ -205,11 +207,15 @@ the parameter values passed to puq.</p>
 <p>Example4:</p>
 <div class="highlight-python"><div class="highlight"><pre># Instead of running an executable or python script directly, can call a python function
 # instead. This results in much faster execution if the test program is a python scripty
-# since the overhead of starting a new python interpreter is eliminated.
+# since the overhead of starting a new python interpreter is eliminated. Note this can
+# only be used with InteractiveHostMP.
 #
 # The equivalent of example 3 is given below. Note that rosen_prog must have a function
-# named &#39;run&#39; which takes in 3 arguments: stdout (string), stderr (string), args (string).
-# The argument &#39;args&#39; is the same string as would be passed when using exe (see example1)
+# named &#39;run&#39; with the signature
+#           def run(args=None, jobinfo=None)
+# The argument &#39;args&#39; is the same string as would be passed when using exe (see example1) and
+# is given by func_args of the TestProgram constructor. &#39;args&#39; can be directly parsed by
+# argparse or optparse.
 
 import rosen_prog
 prog=TestProgram(func=rosen_prog.run, func_args=&#39;--paramsFile=input_params.txt&#39;,

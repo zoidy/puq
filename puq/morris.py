@@ -45,11 +45,12 @@ class Morris(PSweep):
             
         #generate morris samples N(D+1) x D numpy array. Rows are realizations, columns are params
         #Each column is independent in the range [0,1]
-        #TODO: allow for correlation
-        self._samples=SAs.morris_oat.sample(N=num,D=len(params),num_levels=levels,grid_jump=gridjump)
+        #TODO: allow for correlation (Rank correlation: can use Iman & Conover, see test_basepoint_correlation.py)
+        self._samples=SAs.morris_oat.sample(N=num,param_file=self._salib_paramFile,
+                                            num_levels=levels,grid_jump=gridjump)
         
-        #puq will evaluate the output by picking a sample from each parameter in the
-        #order specified in p.values
+        #puq will evaluate the output by picking a sample from each parameter. The order of
+        #evaluation is given by the order specified in p.values
         i=0
         f=open(self._salib_paramFile,'w')
         for p in self.params:

@@ -118,7 +118,8 @@ Default=all cpus.</li>
 <dl class="class">
 <dt id="puq.InteractiveHostMP">
 <em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">InteractiveHostMP</tt><big>(</big><em>cpus=1</em>, <em>cpus_per_node=0</em>, <em>proc_pool=None</em><big>)</big><a class="headerlink" href="#puq.InteractiveHostMP" title="Permalink to this definition">¶</a></dt>
-<dd><p>This is a multiprocessing version of InteractiveHost.</p>
+<dd><p>This is a multiprocessing version of InteractiveHost.  It can only be used when using
+a python function as the test program. See example 4 of <a class="reference internal" href="testprogram.html#puq.TestProgram" title="puq.TestProgram"><tt class="xref py py-class docutils literal"><span class="pre">TestProgram</span></tt></a>.</p>
 <p>Unlike InteractiveHost which
 relies on launching separate python instances for each run, this class executes python
 functions directly using the multiprocessing module and a process pool. This reduces

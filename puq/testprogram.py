@@ -16,9 +16,11 @@ class TestProgram(object):
       exe(string): An executable command template to run. Strings of
         the form '$var' are replaced with the value of *var*.
         See python template strings
-        (`<http://docs.python.org/2/library/string.html#template-strings>`_)
+        (`<http://docs.python.org/2/library/string.html#template-strings>`_).
+        Can be used with any host EXCEPT :class:`InteractiveHostMP`.
       func: a python function to execute. If func is specified, name and exe are ignored.
         Note: func must be a module-level function. It cannot be in a class or another function.
+        Can only be used with :class:`InteractiveHostMP`.
       func_args :the arguments to the python function. See example 4.
       desc: Optional description of the test program.
       newdir(boolean): Run each job in its own directory.  Necessary
@@ -94,11 +96,15 @@ class TestProgram(object):
 
       # Instead of running an executable or python script directly, can call a python function
       # instead. This results in much faster execution if the test program is a python scripty
-      # since the overhead of starting a new python interpreter is eliminated.
+      # since the overhead of starting a new python interpreter is eliminated. Note this can
+      # only be used with InteractiveHostMP.
       #
       # The equivalent of example 3 is given below. Note that rosen_prog must have a function
-      # named 'run' which takes in 3 arguments: stdout (string), stderr (string), args (string).
-      # The argument 'args' is the same string as would be passed when using exe (see example1)
+      # named 'run' with the signature 
+      #           def run(args=None, jobinfo=None)
+      # The argument 'args' is the same string as would be passed when using exe (see example1) and
+      # is given by func_args of the TestProgram constructor. 'args' can be directly parsed by
+      # argparse or optparse.
       
       import rosen_prog
       prog=TestProgram(func=rosen_prog.run, func_args='--paramsFile=input_params.txt',
