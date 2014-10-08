@@ -3,7 +3,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-import os, shutil,optparse,argparse,shlex
+import os, shutil,optparse,argparse,shlex,inspect
 
 class TestProgram(object):
     """
@@ -102,6 +102,8 @@ class TestProgram(object):
       # The equivalent of example 3 is given below. Note that rosen_prog must have a function
       # named 'run' with the signature 
       #           def run(args=None, jobinfo=None)
+      # The 'run' function must ALWAYS return the jobinfo argument on every possible exit path of
+      # the function.
       # The argument 'args' is the same string as would be passed when using exe (see example1) and
       # is given by func_args of the TestProgram constructor. 'args' can be directly parsed by
       # argparse or optparse.
@@ -130,6 +132,13 @@ class TestProgram(object):
             if self.exe!='':
                print('func and exe were both specified. Ignoring exe')
             self.exe=func_args
+            
+            #check to make sure func has the proper signature
+            argspec=inspect.getargspec(func)
+            if len(argspec[0])!=2:
+                raise Exception ('func must have the signature func(args=None,jobinfo=None)')
+            if argspec[0][0]!='args' or argspec[0][1]!='jobinfo':
+                raise Exception ('func must have the signature func(args=None,jobinfo=None)')
         
         
         

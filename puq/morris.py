@@ -42,6 +42,12 @@ class Morris(PSweep):
         self._salib_realizationsFile='==SALib_morris_realizations==.txt'
         self._salib_realizationsFile_verify='==0SALib_morris_realizations==.txt'
         self._salib_analysisFile='==SALib_morris_outputs==.txt'
+        
+        #generate the parameters file for SALib
+        f=open(self._salib_paramFile,'w')
+        for p in self.params:
+            f.write('{}\t{}\t{}\n'.format(p.name,p.pdf.range[0],p.pdf.range[1]))
+        f.close()
             
         #generate morris samples N(D+1) x D numpy array. Rows are realizations, columns are params
         #Each column is independent in the range [0,1]
@@ -51,14 +57,12 @@ class Morris(PSweep):
         
         #puq will evaluate the output by picking a sample from each parameter. The order of
         #evaluation is given by the order specified in p.values
-        i=0
-        f=open(self._salib_paramFile,'w')
+        i=0        
         for p in self.params:
             #map each column of _samples to a parameter, using the inverse cdf to transform it
             #into the appropriate distribution.
             p.values = p.pdf.ppf(self._samples[:,i])          
             i+=1
-            f.write('{}\t{}\t{}\n'.format(p.name,p.pdf.range[0],p.pdf.range[1]))
             
             if hasattr(p, 'use_samples_val') and p.use_samples_val:
                 print("Warning: ignoring option 'use_samples_val' for {}".format(p.name))
