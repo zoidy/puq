@@ -46,11 +46,11 @@ class Morris(PSweep):
         #generate the parameters file for SALib
         f=open(self._salib_paramFile,'w')
         for p in self.params:
-            f.write('{}\t{}\t{}\n'.format(p.name,p.pdf.range[0],p.pdf.range[1]))
+            f.write('{}\t{}\t{}\n'.format(p.name,0,1))
         f.close()
             
         #generate morris samples N(D+1) x D numpy array. Rows are realizations, columns are params
-        #Each column is independent in the range [0,1]
+        #Each column is independent and between 0 and 1. The columns are the quantiles of the input pdfs.
         #TODO: allow for correlation (Rank correlation: can use Iman & Conover, see test_basepoint_correlation.py)
         self._samples=SAs.morris_oat.sample(N=num,param_file=self._salib_paramFile,
                                             num_levels=levels,grid_jump=gridjump)
@@ -61,7 +61,7 @@ class Morris(PSweep):
         for p in self.params:
             #map each column of _samples to a parameter, using the inverse cdf to transform it
             #into the appropriate distribution.
-            p.values = p.pdf.ppf(self._samples[:,i])          
+            p.values = p.pdf.ppf(self._samples[:,i])
             i+=1
             
             if hasattr(p, 'use_samples_val') and p.use_samples_val:
