@@ -207,11 +207,12 @@ def get_response(hf, var):
 def get_sensitivity(hf, var):
     """get_sensitivity(hf, var).
 
-    Returns the sensitivity indices for var in a dictionary with keys equal to 
+    Returns the sensitivity indices for var in a list of tuples. The first element of a tuple is the
+    parameter name, the second element is a dictionary with keys equal to 
     parameter names and values consisting of dictionaries with keys equal to sensitivity indices.
     E.g., for a Smolyak run
     
-        {<param name>:{'ustar':float, 'std':float}, ... }
+        [(<param name>,{'ustar':float, 'std':float}), ... }
 
     The keys in the sub dictionaries will vary depending on the type of sensitivity analysis 
     (Smolyak or Morris) but will contain at least 'ustar' and 'std'. Morris also contains 'u' and
