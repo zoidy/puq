@@ -98,7 +98,10 @@ class Host(object):
                 grp.create_dataset('std%s' % ext, data=f.read())
                 f.close()
                 if not options['keep']:
-                    os.remove(fname)
+                    try:
+                        os.remove(fname)
+                    except Exception,e:
+                        print('Error removing file. {}'.format(str(e)))
 
             if self.prog.newdir:
                 os.chdir('%s_%s' % (self.fname, j))
@@ -551,7 +554,6 @@ class InteractiveHostMP(Host):
                 
                 if cpus > InteractiveHostMP._cpus_free:
                     self.wait(cpus)
-                InteractiveHostMP._cpus_free -= cpus
                 
                 t_start=time.clock()
                 job_info_args={'jobnum':jobnum, 'start_time':t_start}
@@ -562,6 +564,7 @@ class InteractiveHostMP(Host):
                 funcstr+='stdout: {} stderr:{}'.format(j['outfile']+'.out',j['outfile']+'.err')
                 
                 InteractiveHostMP._lock.acquire()
+                InteractiveHostMP._cpus_free -= cpus
                 j['status']='R'
                 InteractiveHostMP._running[jobnum]=None
                 s=self._monitor.start_job(funcstr,jobnum+1,len(InteractiveHostMP._jobs),dryrun,
@@ -605,12 +608,16 @@ class InteractiveHostMP(Host):
                 #end if dryrun    
             #end if j['status'] == 0 or j['status'] == 'X':
                                                                     
-        #wait for all jobs in the pool to finish
-        #print('waiting on pool close and join')
         sys.stdout.flush()
         if self._pool==None:
+            #if the pool has NOT been externally created,
+            #wait for all jobs in the pool to finish
+            #print('waiting on pool close and join')
             pool.close()
             pool.join()
+            #if the pool has been externally created, cant wait using the above
+            #method since the method requires closing the pool. Instead, we must
+            #rely on the self.wait(0) call below
 
         #wait for callbacks and error handlers to finish before exiting
         #1 sec should be enough of a wait since each process_waiter only
@@ -689,17 +696,30 @@ class InteractiveHostMP(Host):
             #print('Job {} lock released.'.format(jobnum))
         
     def _process_waiter(self,jobnum,async_result,t_start):
+        #if a process is stuck, continue as if there was an error. Note that the 
+        #process is not killed. If the process completes after the time out, 
+        #_job_finished_callback is still called but it will silently fail since
+        #the job is no longer in the queue.
+        timeout=1800 #each process will only be allowed to run for 1800sec (0.5 hr)
+        timeout_elapsed=False
+        timeout_start=time.clock()
         while not async_result.ready():
             time.sleep(0.1)
+            if time.clock()-timeout_start>=timeout:
+                timeout_elapsed=True
+                break
 
         #job has exited. was it successful? If so, then _jobfinished_callback ran.
         #If not, then it wasn't called and we need to handle the error here
         err=''
-        if not async_result.successful():
+        if timeout_elapsed or not async_result.successful():
             try:
                 #s='Job {} completed with ERRORS. waited {} sec.\n'.format(jobnum,
                 #                    time.clock()-t_start)
-                async_result.get()
+                if not timeout_elapsed:
+                    async_result.get()
+                else:
+                    raise Exception('Job {} timed out after {} sec'.format(jobnum,timeout))
             except Exception:
                 #note this won't be the full traceback unfortunately...
                 #See http://stackoverflow.com/a/8708806
@@ -775,13 +795,13 @@ class InteractiveHostMP(Host):
                 return
             #this if tests for a race condition at the end of the run. 
             #Can comment out if condition is not observed after a while
-            if not cpus:
-                print(len(InteractiveHostMP._running),
-                    [j for j in InteractiveHostMP._jobs.keys() if InteractiveHostMP._jobs[j]['status']=='R'],
-                    InteractiveHostMP._cpus_free,cpus)
-                if count>10:                    
-                    raise Exception("DEBUG. You shouldn't see this error.")
-                count+=1
+            # if not cpus:
+                # print(len(InteractiveHostMP._running),
+                    # [j for j in InteractiveHostMP._jobs.keys() if InteractiveHostMP._jobs[j]['status']=='R'],
+                    # InteractiveHostMP._cpus_free,cpus)
+                # if count>10:                    
+                    # raise Exception("DEBUG. You shouldn't see this error.")
+                # count+=1
                 
 def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,stderr_file=None,
                                            workingdir=None,jobworkingdir=None):
