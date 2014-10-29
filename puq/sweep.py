@@ -96,6 +96,9 @@ class Sweep(object):
         h = h.require_group('params')
         for p in self.psweep.params:
             h[p.name] = pickle(p)
+            if p.attrs!=None and len(p.attrs)>0:
+                for attrtuple in p.attrs:
+                    h[p.name].attrs[attrtuple[0]]=attrtuple[1]
 
         # input script
         if hasattr(self, 'input_script'):

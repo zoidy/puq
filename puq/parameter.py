@@ -166,6 +166,8 @@ class NormalParameter(Parameter):
     Args:
       name: Name of the parameter. This should be a short name, like a variable.
       description:  A longer description of the parameter.
+      attrs: a list of tuples ('attrname',attrval) which are additional attributes to assign
+      to this parameter.
       kwargs: Keyword args.  Valid args are:
 
         ======== ============================
@@ -175,12 +177,13 @@ class NormalParameter(Parameter):
         dev      The standard deviation
         ======== ============================
     '''
-    def __init__(self, name, description, **kwargs):
+    def __init__(self, name, description,attrs=None, **kwargs):
         debug("name:%s desc:%s kwargs:%s" % (name, description, kwargs))
         self.name = self.check_name(name)
         self.description = description
         self.caldata = kwargs.pop('caldata', None)
         self.pdf = NormalPDF(**kwargs)
+        self.attrs=attrs
 
     # This is what you see when the object is printed
     def __str__(self):
@@ -318,6 +321,8 @@ class CustomParameter(Parameter):
       name: Name of the parameter. This should be a short name,
         like a variable.
       description:  A longer description of the parameter.
+      attrs: a list of tuples ('attrname',attrval) which are additional attributes to assign
+      to this parameter.
       kwargs: Keyword args.  Valid args are:
 
         ================== ================================================================
@@ -359,7 +364,7 @@ class CustomParameter(Parameter):
                            flag set, it is equivalent to running a :class:`SimpleSweep`
         ================== ================================================================
     '''
-    def __init__(self, name, description, **kwargs):
+    def __init__(self, name, description,attrs=None, **kwargs):
         #Parameter.__init__(self, args)
         #:Parameter name (same as name from constructor
         self.name = self.check_name(name)
@@ -372,6 +377,8 @@ class CustomParameter(Parameter):
         self.caldata = kwargs.get('caldata')
         #:A 1D array of parameter values. These are the values used when evaluating the :class:`TestProgram`
         self.values=None
+        
+        self.attrs=attrs
 
         if self.pdf is None and self.caldata is None:
             self.usage(0)
@@ -427,6 +434,8 @@ class UniformParameter(Parameter):
       name: Name of the parameter. This should be a short name,
         like a variable.
       description:  A longer description of the parameter.
+      attrs: a list of tuples ('attrname',attrval) which are additional attributes to assign
+      to this parameter.
       kwargs: Keyword args.  Valid args are:
 
         ======== ============================
@@ -441,11 +450,12 @@ class UniformParameter(Parameter):
     give all three, they will be checked for consistency.
     :math:`mean = (min + max)/2`
     '''
-    def __init__(self, name, description, **kwargs):
+    def __init__(self, name, description, attrs=None,**kwargs):
         self.name = self.check_name(name)
         self.description = description
         self.caldata = kwargs.pop('caldata', None)
         self.pdf = UniformPDF(**kwargs)
+        self.attrs=attrs
 
     def __str__(self):
         return "UniformParameter %s (%s)\n\t%s" %\
@@ -462,6 +472,8 @@ class ConstantParameter(Parameter):
       name: Name of the parameter. This should be a short name,
         like a variable.
       description:  A longer description of the parameter.
+      attrs: a list of tuples ('attrname',attrval) which are additional attributes to assign
+      to this parameter.
       kwargs: Keyword args.  Valid args are:
 
         ======== ============================
@@ -471,11 +483,12 @@ class ConstantParameter(Parameter):
         ======== ============================
 
     '''
-    def __init__(self, name, description, **kwargs):
+    def __init__(self, name, description, attrs=None,**kwargs):
         self.name = self.check_name(name)
         self.description = description
         self.pdf = Constant(**kwargs)
         self.values=self.pdf.data
+        self.attrs=attrs
 
     def __str__(self):
         return "ConstantParameter %s (%s)\n\t%s" %\
