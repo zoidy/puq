@@ -159,13 +159,13 @@ def get_params(hf):
 def get_params_with_attrs(hf):
     """"get_params2(hf)
     
-    Returns a list of 2-tuples containing the parameter name and the attached attributes dictionary.
+    Returns a list of tuples containing the parameter name and the attributes dictionary.
     
     Args:
       hf: An open HDF5 filehandle or a string containing the HDF5
         filename to use.
     """    
-    return [(unpickle(hf['/input/params'][p].value).name,hf['/input/params'][p].attrs) for p in hf['/input/params']]
+    return [(unpickle(hf['/input/params'][p].value).name,dict(hf['/input/params'][p].attrs.items())) for p in hf['/input/params']]
     
 @hdf5_wrap
 def data_description(hf, var):
