@@ -224,14 +224,26 @@
 <div class="viewcode-block" id="get_params"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.get_params">[docs]</a><span class="k">def</span> <span class="nf">get_params</span><span class="p">(</span><span class="n">hf</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;get_params(hf)</span>
 
-<span class="sd">    Returns a list of arrays of input parameter values.</span>
+<span class="sd">    Returns a list of arrays of input parameter objects.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">      hf: An open HDF5 filehandle or a string containing the HDF5</span>
 <span class="sd">        filename to use.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">unpickle</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s">&#39;/input/params&#39;</span><span class="p">][</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">[</span><span class="s">&#39;/input/params&#39;</span><span class="p">]]</span>
-</div>
+    </div>
+<span class="nd">@hdf5_wrap</span>
+<div class="viewcode-block" id="get_params_with_attrs"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.get_params_with_attrs">[docs]</a><span class="k">def</span> <span class="nf">get_params_with_attrs</span><span class="p">(</span><span class="n">hf</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;&quot;get_params2(hf)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns a list of tuples containing the parameter name and the attributes dictionary.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">      hf: An open HDF5 filehandle or a string containing the HDF5</span>
+<span class="sd">        filename to use.</span>
+<span class="sd">    &quot;&quot;&quot;</span>    
+    <span class="k">return</span> <span class="p">[(</span><span class="n">unpickle</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s">&#39;/input/params&#39;</span><span class="p">][</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="nb">dict</span><span class="p">(</span><span class="n">hf</span><span class="p">[</span><span class="s">&#39;/input/params&#39;</span><span class="p">][</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">hf</span><span class="p">[</span><span class="s">&#39;/input/params&#39;</span><span class="p">]]</span>
+    </div>
 <span class="nd">@hdf5_wrap</span>
 <div class="viewcode-block" id="data_description"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.data_description">[docs]</a><span class="k">def</span> <span class="nf">data_description</span><span class="p">(</span><span class="n">hf</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;data_description(hf, var)</span>
@@ -284,11 +296,12 @@
 <div class="viewcode-block" id="get_sensitivity"><a class="viewcode-back" href="../../reference/hdf.html#puq.hdf.get_sensitivity">[docs]</a><span class="k">def</span> <span class="nf">get_sensitivity</span><span class="p">(</span><span class="n">hf</span><span class="p">,</span> <span class="n">var</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;get_sensitivity(hf, var).</span>
 
-<span class="sd">    Returns the sensitivity indices for var in a dictionary with keys equal to </span>
+<span class="sd">    Returns the sensitivity indices for var in a list of tuples. The first element of a tuple is the</span>
+<span class="sd">    parameter name, the second element is a dictionary with keys equal to </span>
 <span class="sd">    parameter names and values consisting of dictionaries with keys equal to sensitivity indices.</span>
 <span class="sd">    E.g., for a Smolyak run</span>
 <span class="sd">    </span>
-<span class="sd">        {&lt;param name&gt;:{&#39;ustar&#39;:float, &#39;std&#39;:float}, ... }</span>
+<span class="sd">        [(&lt;param name&gt;,{&#39;ustar&#39;:float, &#39;std&#39;:float}), ... }</span>
 
 <span class="sd">    The keys in the sub dictionaries will vary depending on the type of sensitivity analysis </span>
 <span class="sd">    (Smolyak or Morris) but will contain at least &#39;ustar&#39; and &#39;std&#39;. Morris also contains &#39;u&#39; and</span>

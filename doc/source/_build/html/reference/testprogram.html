@@ -213,6 +213,8 @@ the parameter values passed to puq.</p>
 # The equivalent of example 3 is given below. Note that rosen_prog must have a function
 # named &#39;run&#39; with the signature
 #           def run(args=None, jobinfo=None)
+# The &#39;run&#39; function must ALWAYS return the jobinfo argument on every possible exit path of
+# the function.
 # The argument &#39;args&#39; is the same string as would be passed when using exe (see example1) and
 # is given by func_args of the TestProgram constructor. &#39;args&#39; can be directly parsed by
 # argparse or optparse.
