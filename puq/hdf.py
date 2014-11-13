@@ -147,7 +147,7 @@ def get_param_names(hf):
 def get_params(hf):
     """get_params(hf)
 
-    Returns a list of arrays of input parameter values.
+    Returns a list of arrays of input parameter objects.
 
     Args:
       hf: An open HDF5 filehandle or a string containing the HDF5

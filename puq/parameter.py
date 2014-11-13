@@ -74,6 +74,9 @@ class Parameter(object):
       is set.
     - :class:`CustomParameter` is returned if *pdf* or *caldata* is set.
 
+    When the parameter is sampled using one of the PSweep classes (e.g., Monte Carlo),
+    the sample values are available in the *values* property of the Parameter object.
+    
     Args:
       name: Name of the parameter. This should be a short name,
         like a variable.

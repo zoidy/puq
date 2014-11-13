@@ -12,6 +12,7 @@ from logging import info, debug, exception, warning, critical
 from puq.response import SampledFunc
 from puq.jpickle import pickle,unpickle
 from puq.pdf import UniformPDF, ExperimentalPDF
+from puq.options import options
 import SALib.sample as SAs
 import SALib.analyze as SAa
 import SALib.util as SAu
@@ -80,6 +81,7 @@ class Morris(PSweep):
             yield [(p.name, p.values[i],p.description) for p in self.params]
 
     def _do_pdf(self, hf, data):
+        #called by util.process_data as the callback function.
         if self.response:
             print('Morris method does not support creating response surfaces')
             raise ValueError            
@@ -117,16 +119,22 @@ class Morris(PSweep):
             # else:
                 # print('Warning: The order in which the parameter samples were constructed is different than the sampled order!')
             
-            #get the outputs
-            outputs=hf['/output/data']
-            numputputs=len(outputs)
+            #get the outputs. hf is the group of the output variable currently being processed
+            #e.g., if the output is X, hf.name = '/morris/X'.
+            #Note can also access the full hdf5 tree. Eg., hf['/outputs/data'] will given the
+            #/outputs/data group, even though its not a subgroup of /morris/X           
+            numoutputs=len(hf['/output/data'])
+            self._num_outputs_processed+=1
+            
+            #save the output into its own file
+            salib_analysisFile=os.path.splitext(self._salib_analysisFile)[0] + os.path.basename(hf.name) + '.txt'
             
             #SALib expects each output variable in a single column
-            np.savetxt(self._salib_analysisFile,data)
+            np.savetxt(salib_analysisFile,data)
             
             #Note: the delimiters for all the files passed to the analyze function must be the same
             s=SAa.morris.analyze(self._salib_paramFile,self._salib_realizationsFile,
-                self._salib_analysisFile,column=0)
+                salib_analysisFile,column=0)
                 
             #read the paramsFile to find the parameter names
             pf=SAu.read_param_file(self._salib_paramFile)
@@ -140,18 +148,24 @@ class Morris(PSweep):
             sorted_list = sorted(sens.items(), lambda x, y: cmp(y[1]['ustar'], x[1]['ustar']))                
             
             try:
-                os.remove(self._salib_paramFile)
-                os.remove(self._salib_realizationsFile)
-                os.remove(self._salib_analysisFile)
-                #os.remove(self._salib_realizationsFile_verify)
+                if not options['keep']:
+                    if self._num_outputs_processed==numoutputs:
+                        #don't delete these until we've processed all outputs. unlike salib_analysisFile,
+                        #the files below don't get recreated at each call to this function.
+                        os.remove(self._salib_paramFile)
+                        os.remove(self._salib_realizationsFile)
+                    os.remove(salib_analysisFile)
+                    #os.remove(self._salib_realizationsFile_verify)
+                    pass
             except Exception,e:
-                print("error deleting SALib temp files. " + str(e))
+                print("warning: couldn't delete all SALib temp files. " + str(e))
             
             return [('pdf', pickle(pdf)), ('samples', data), ('mean', mean), ('dev', dev),
                     ('sensitivity',pickle(sorted_list))]
 
     def analyze(self, hf):
         debug('')
+        self._num_outputs_processed=0
         process_data(hf, 'morris', self._do_pdf)
         self._hf=hf
 
