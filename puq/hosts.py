@@ -863,6 +863,7 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
             sys.stdout.close()
         if stderr_file!=None:
             sys.stderr.close()
+        os.chdir(workingdir)
 
         
         
