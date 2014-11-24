@@ -13,9 +13,12 @@ from puq.response import SampledFunc
 from puq.jpickle import pickle,unpickle
 from puq.pdf import UniformPDF, ExperimentalPDF
 from puq.options import options
-import SALib.sample as SAs
-import SALib.analyze as SAa
-import SALib.util as SAu
+#import SALib.sample as SAs
+#import SALib.analyze as SAa
+from SALib.sample import morris_oat
+from SALib.analyze import morris
+from SALib.util import read_param_file
+#import SALib.util as SAu
 import os
 import filecmp
 
@@ -53,7 +56,7 @@ class Morris(PSweep):
         #generate morris samples N(D+1) x D numpy array. Rows are realizations, columns are params
         #Each column is independent and between 0 and 1. The columns are the quantiles of the input pdfs.
         #TODO: allow for correlation (Rank correlation: can use Iman & Conover, see test_basepoint_correlation.py)
-        self._samples=SAs.morris_oat.sample(N=num,param_file=self._salib_paramFile,
+        self._samples=morris_oat.sample(N=num,param_file=self._salib_paramFile,
                                             num_levels=levels,grid_jump=gridjump)
         
         #puq will evaluate the output by picking a sample from each parameter. The order of
@@ -133,11 +136,11 @@ class Morris(PSweep):
             np.savetxt(salib_analysisFile,data)
             
             #Note: the delimiters for all the files passed to the analyze function must be the same
-            s=SAa.morris.analyze(self._salib_paramFile,self._salib_realizationsFile,
+            s=morris.analyze(self._salib_paramFile,self._salib_realizationsFile,
                 salib_analysisFile,column=0)
                 
             #read the paramsFile to find the parameter names
-            pf=SAu.read_param_file(self._salib_paramFile)
+            pf=read_param_file(self._salib_paramFile)
             
             #put things in the same format as the smolyak module
             sens={}
@@ -176,7 +179,7 @@ class Morris(PSweep):
 
         #TODO: when correlation is implemented, only allow extending if
         #the samples are uncorrelated
-        samples=SAs.morris_oat.sample(N=numtrajectories,D=len(self.params),
+        samples=morris_oat.sample(N=numtrajectories,D=len(self.params),
                     num_levels=self.levels,grid_jump=self.gridjump)
                     
         i=0    
