@@ -693,7 +693,10 @@ def ExperimentalPDF(data, min=None, max=None, fit=False, bw=None, nbins=0, prior
     if nbins and nbins <= 1:
         raise ValueError("ERROR: invalid number of bins: %s" % nbins)
     if len(data) < 1 or (len(data) == 1 and not error):
-        raise ValueError("ERROR: need at least two data points to build a PDF, or a prior and 1 data point.")
+        if len(data)==1:
+            data=np.r_[data[0],data[0]]
+        else:
+            raise ValueError("ERROR: need at least two data points to build a PDF, or a prior and 1 data point.")
 
     if error:
         # Bayesian parameter estimation
