@@ -14,16 +14,19 @@ See https://github.com/martin-hunt/puq for the original readme.
 Purpose
 =======
 
-This fork aims to port some/most of puq to the Windows platform and add some functionality.
+This fork removes some of the *nix specific system calls which allows PUQ to be run on the Windows 
+platform. Furthermore, some functionality is added.
 
-Functionality
+New Functionality
 ========================
 In addition to running on Windows, this version of puq adds the following functionality:
 
 - Ability to conduct sensitivity analysis using the Morris method (requires 
   `my version <https://github.com/zoidy/SALib>`_  of the SALib library)
+- Can use a Python function as the TestModel. This SIGNIFICATLY speeds up model runs when the 
+  model is Python module since a Python interpreter no longer needs to be started for each model run.
 - Ability to pass parameters to the test program by file instead of passing them all on the
-  command line
+  command line.
 - Ability to exactly specify the values to be used when conducting an analysis, instead of 
   having puq sample the PDF. This is useful in cases when the samples of the parameter are
   generated externally.  
