@@ -3,7 +3,7 @@ Introduction
 ************
 
 :Version: 2.2
-:Authors: Martin Hunt, Fernando Rios
+:Authors: Fernando Rios, Martin Hunt
 :Web site: https://github.com/zoidy/puq
 :Documentation: http://martin-hunt.github.io/puq/
 :Copyright: This document has been placed in the public domain.
@@ -14,6 +14,8 @@ See https://github.com/martin-hunt/puq for the original readme.
 Purpose
 =======
 
+This is a significantly modified version of PUQ by Martin Hunt. It is meant to be used with the Wiggly UA/SA framework. 
+However, it should be mostly backwards compatible with the original PUQ.
 This fork removes some of the *nix specific system calls which allows PUQ to be run on the Windows 
 platform. Furthermore, some functionality is added.
 
