@@ -154,7 +154,24 @@ filename to use.</td>
 <dl class="function">
 <dt id="puq.hdf.get_params">
 <tt class="descclassname">puq.hdf.</tt><tt class="descname">get_params</tt><big>(</big><em>hf</em><big>)</big><a class="reference internal" href="../_modules/puq/hdf.html#get_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#puq.hdf.get_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a list of arrays of input parameter values.</p>
+<dd><p>Returns a list of arrays of input parameter objects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>hf</strong> &#8211;
+An open HDF5 filehandle or a string containing the HDF5
+filename to use.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="puq.hdf.get_params_with_attrs">
+<tt class="descclassname">puq.hdf.</tt><tt class="descname">get_params_with_attrs</tt><big>(</big><em>hf</em>, <em>*args</em>, <em>**kargs</em><big>)</big><a class="reference internal" href="../_modules/puq/hdf.html#get_params_with_attrs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#puq.hdf.get_params_with_attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>&#8220;get_params2(hf)</p>
+<p>Returns a list of tuples containing the parameter name and the attributes dictionary.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -212,6 +229,42 @@ one output variable.</li>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><tt class="xref py py-exc docutils literal"><span class="pre">ValueError</span></tt> &#8211; 
 if <strong>var</strong> is not found or <strong>var</strong> is None and there
 are multiple output variables.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="puq.hdf.get_result_pdf">
+<tt class="descclassname">puq.hdf.</tt><tt class="descname">get_result_pdf</tt><big>(</big><em>hf</em>, <em>*args</em>, <em>**kargs</em><big>)</big><a class="reference internal" href="../_modules/puq/hdf.html#get_result_pdf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#puq.hdf.get_result_pdf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same as <a class="reference internal" href="#puq.hdf.get_result" title="puq.hdf.get_result"><tt class="xref py py-func docutils literal"><span class="pre">get_result()</span></tt></a> except a <a class="reference internal" href="pdf.html#puq.PDF" title="puq.PDF"><tt class="xref py py-class docutils literal"><span class="pre">puq.PDF</span></tt></a> object is returned.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="puq.hdf.get_sensitivity">
+<tt class="descclassname">puq.hdf.</tt><tt class="descname">get_sensitivity</tt><big>(</big><em>hf</em>, <em>*args</em>, <em>**kargs</em><big>)</big><a class="reference internal" href="../_modules/puq/hdf.html#get_sensitivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#puq.hdf.get_sensitivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>get_sensitivity(hf, var).</p>
+<p>Returns the sensitivity indices for var in a list of tuples. The first element of a tuple is the
+parameter name, the second element is a dictionary with keys equal to
+parameter names and values consisting of dictionaries with keys equal to sensitivity indices.
+E.g., for a Smolyak run</p>
+<blockquote>
+<div>[(&lt;param name&gt;,{&#8216;ustar&#8217;:float, &#8216;std&#8217;:float}), ... }</div></blockquote>
+<p>The keys in the sub dictionaries will vary depending on the type of sensitivity analysis
+(Smolyak or Morris) but will contain at least &#8216;ustar&#8217; and &#8216;std&#8217;. Morris also contains &#8216;u&#8217; and
+&#8216;ustar_conf95&#8217;.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hf</strong> &#8211;
+An open HDF5 filehandle or a string containing the HDF5
+filename to use.</li>
+<li><strong>var</strong> &#8211;
+Output variable name.</li>
+</ul>
 </td>
 </tr>
 </tbody>

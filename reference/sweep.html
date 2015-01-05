@@ -105,13 +105,12 @@ a parameter sweep.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>psweep</strong> &#8211;
-Parameter Sweep object. See <a class="reference internal" href="parameters.html#puq.PSweep" title="puq.PSweep"><tt class="xref py py-class docutils literal"><span class="pre">PSweep</span></tt></a>.</li>
+Parameter Sweep object. See <a class="reference internal" href="psweep.html#puq.PSweep" title="puq.PSweep"><tt class="xref py py-class docutils literal"><span class="pre">PSweep</span></tt></a>.</li>
 <li><strong>host</strong> &#8211;
 Host object.  See <tt class="xref py py-class docutils literal"><span class="pre">Host</span></tt>.</li>
 <li><strong>prog</strong> &#8211;
 TestProgram object: See <a class="reference internal" href="testprogram.html#puq.TestProgram" title="puq.TestProgram"><tt class="xref py py-class docutils literal"><span class="pre">TestProgram</span></tt></a>.</li>
-<li><strong>caldata(array</strong> &#8211;
-Experimental data for calibration. Optional.</li>
+<li><strong>caldata(array: Experimental data for calibration. Optional.</strong></li>
 <li><strong>calerr</strong> (<em>float</em>) &#8211;
 Measurement error in the experimental data.</li>
 <li><strong>description</strong> (<em>string</em>) &#8211;
@@ -124,9 +123,10 @@ Optional description of this run.</li>
 <dl class="method">
 <dt id="puq.Sweep.analyze">
 <tt class="descname">analyze</tt><big>(</big><em>verbose=False</em><big>)</big><a class="headerlink" href="#puq.Sweep.analyze" title="Permalink to this definition">¶</a></dt>
-<dd><p>Collects the output from all the jobs into an HDF5 file.
+<dd><p>If not done already, collects the output from all the jobs into an HDF5 file.
 Parses any tagged data in the output and puts it in
-the /data group in the HDF5 file.</p>
+the output/data group in the HDF5 file.</p>
+<p>This function is called from the puq command line interface script automatically.</p>
 </dd></dl>
 
 <dl class="method">
@@ -138,7 +138,7 @@ in &#8216;output/data&#8217;. Returns True on success.</p>
 
 <dl class="method">
 <dt id="puq.Sweep.run">
-<tt class="descname">run</tt><big>(</big><em>fn=None</em>, <em>overwrite=False</em><big>)</big><a class="headerlink" href="#puq.Sweep.run" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">run</tt><big>(</big><em>fn=None</em>, <em>overwrite=False</em>, <em>dryrun=False</em><big>)</big><a class="headerlink" href="#puq.Sweep.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls PSweep.run() to run all the jobs in the Sweep.  Collect the data
 from the outputs and call the PSweep analyze method.  If the PSweep method
 has an iterative callback defined, call it, otherwise return.</p>
@@ -155,6 +155,9 @@ followed by a timestamp.</li>
 <li><strong>overwrite</strong> (<em>boolean</em>) &#8211;
 If True and fn is not None, will
 silently overwrite any previous files of the same name.</li>
+<li><strong>dryrun</strong> (<em>boolean</em>) &#8211;
+Simulates what would happen if UQ is run, without
+actually running the TestProgram.</li>
 </ul>
 </td>
 </tr>
