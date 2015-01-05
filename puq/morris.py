@@ -102,7 +102,7 @@ class Morris(PSweep):
             #N(D+1) x D            
             realizations=np.empty((np.size(data,0),len(self.params)))
             
-            #retrieve the paramter samples in the same order as given to SALib
+            #retrieve the parameter samples in the same order as given to SALib
             i=0
             for p in self.params:
                 aParam=unpickle(hf['/input/params'][p.name].value) 
