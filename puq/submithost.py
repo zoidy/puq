@@ -14,6 +14,7 @@ from shutil import rmtree
 from stat import S_ISDIR
 from glob import glob
 from threading import Thread, Event
+from util import flushStdStreams
 
 class SubmitHost(Host):
     """
@@ -103,7 +104,7 @@ class SubmitHost(Host):
                 d = done
             if d > done:
                 print '=RAPPTURE-PROGRESS=>%d Running' % (int(d))
-                sys.stdout.flush()
+                flushStdStreams('stdout')
                 done = d
             if int(d) >= 100:
                 self.stop.set()
@@ -113,13 +114,13 @@ class SubmitHost(Host):
     def _run(self):
         j = self.jobs[0]
         print '=RAPPTURE-PROGRESS=>0 Starting'
-        sys.stdout.flush()
+        flushStdStreams('stdout')
 
         try:
             myprocess = Popen(j['cmd'], stdout=PIPE, stderr=PIPE, bufsize=0)
         except Exception, e:
             print 'Command %s failed: %s' % (' '.join(j['cmd']), e)
-            sys.stdout.flush()
+            flushStdStreams('stdout')
 
         self.stop = Event()
         p2 = Thread(target=self.status_monitor)
@@ -139,7 +140,7 @@ class SubmitHost(Host):
                     if fn:
                         with open(fn[0]) as f:
                             print f.read()
-                sys.stdout.flush()
+                flushStdStreams('stdout')
         except KeyboardInterrupt:
             print '\nPUQ interrupted. Cleaning up. Please wait...\n'
             err = False

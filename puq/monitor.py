@@ -1,4 +1,4 @@
-from util import vprint
+from util import vprint,flushStdStreams
 from logging import info, debug, exception, warning, critical
 from puq.options import options
 import datetime,sys
@@ -44,10 +44,10 @@ class TextMonitor(Monitor):
                 self._time_ref=datetime.datetime.now()
                 if currjob<numjobs:
                     sys.stdout.write('\r{}/{} '.format(currjob,numjobs))                
-                    sys.stdout.flush()
+                    flushStdStreams('stdout')
             if currjob>=numjobs:
                 sys.stdout.write('\r{}/{}\n'.format(currjob,numjobs))
-                sys.stdout.flush()
+                flushStdStreams('stdout')
         
         #return the printed string. Else return the jobstr and cpustr (used by InteractiveHost)
         if not return_jobcpustr:

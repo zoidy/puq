@@ -14,7 +14,7 @@ from jobqueue import JobQueue
 from subprocess import Popen, PIPE
 import numpy as np
 from puq.options import options
-from util import vprint
+from util import vprint,flushStdStreams
 from shutil import rmtree
 
 # fixme: how about supporting Host(name) where name is looked up in a host database?
@@ -305,8 +305,7 @@ class InteractiveHost(Host):
                 self._running.append((p, j))
                                 
         self.wait(0)
-        sys.stdout.flush()
-        sys.stderr.flush()
+        flushStdStreams()
 
     def process_waiter(self,popen,t_start=None):
         #http://stackoverflow.com/questions/100624
@@ -529,6 +528,9 @@ class InteractiveHostMP(Host):
                 j=InteractiveHostMP._jobs[jobnum]
                 j['status'] = 0
             return False
+        except Exception,e:
+            print(str(e))
+            return False
         finally:
             if self._pool==None:
                 pool.close()
@@ -608,7 +610,7 @@ class InteractiveHostMP(Host):
                 #end if dryrun    
             #end if j['status'] == 0 or j['status'] == 'X':
                                                                     
-        sys.stdout.flush()
+        flushStdStreams('stdout')
         if self._pool==None:
             #if the pool has NOT been externally created,
             #wait for all jobs in the pool to finish
@@ -623,7 +625,7 @@ class InteractiveHostMP(Host):
         #1 sec should be enough of a wait since each process_waiter only
         #sleeps for 0.1 sec
         #print('waiting on wait function')
-        sys.stdout.flush()
+        flushStdStreams('stdout')
         time.sleep(0.6)
         
         #really make sure that all callbacks and waiters are finished
@@ -647,14 +649,14 @@ class InteractiveHostMP(Host):
         # s+='Job {} finished successfully. waited {} sec. Waiting for lock...\n'.format(jobnum,
                                 # time.clock()-t_start)
         # print(s)
-        # sys.stdout.flush()
+        # flushStdStreams('stdout')
         # s=''
         
         t_start_lock=time.clock()
         InteractiveHostMP._lock.acquire()
         # s+='Job {} Lock acquired, waited {} sec\n'.format(jobnum,time.clock()-t_start_lock)
         # print(s)
-        # sys.stdout.flush()
+        # flushStdStreams('stdout')
         # s=''
         
         try:            
@@ -857,8 +859,7 @@ def _InteractiveHostMP_run_testProgramFunc(func,jobinfo,args,stdout_file=None,st
         r=func(**{'jobinfo':jobinfo,'args':args})
         return r
     finally:
-        sys.stdout.flush()
-        sys.stderr.flush()
+        flushStdStreams()
         if stdout_file!=None:
             sys.stdout.close()
         if stderr_file!=None:

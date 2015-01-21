@@ -17,6 +17,23 @@ def vprint(level, str):
     if options['verbose'] >= level:
         print str
 
+def flushStdStreams(stream='both'):
+    """
+    Flushes standard output streams. Function is safe to use even if the streams
+    have been redirected.
+    
+    - *stream*: 'stdout' flushes stdout only. 'stderr' flushes stderr only
+    """
+    streams=[sys.stdout,sys.stderr]
+    if stream=='stdout':
+        streams.remove(sys.stderr)
+    if stream=='stderr':
+        streams.remove(sys.stdout)
+        
+    for s in streams:
+        if hasattr(s,'flush'):
+            s.flush()
+        
 # read psamples from a csv file and return a dictionary
 def get_psamples_from_csv(sw, h5, sname):
     samples = {}
