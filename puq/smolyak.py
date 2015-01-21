@@ -5,8 +5,11 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 """
-
-import sparse_grid_cc
+try:
+    import sparse_grid_cc
+    sparse_grid_cc_ok=True
+except ImportError,e:
+    sparse_grid_cc_ok=False
 import numpy as np
 from puq.smolyak_funcs import legendre_nd, jacobi_e2_nd, nelms, chaos_sequence
 from puq.util import process_data, vprint
@@ -34,6 +37,9 @@ class Smolyak(PSweep):
         self.params = params
         self.level = int(level)
         self._calculate_params()
+        
+        if not sparse_grid_cc_ok:
+            raise Exception("Could not import sparse_grid_cc")
 
     def _calculate_params(self):
         # self.grid is the original smolyak grid

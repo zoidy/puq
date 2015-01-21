@@ -1,4 +1,3 @@
-import sys
 from hosts import InteractiveHost,InteractiveHostMP
 from submithost import SubmitHost
 from montecarlo import MonteCarlo
@@ -6,10 +5,7 @@ from lhs import LHS
 from morris import Morris
 from options import options
 from parameter import Parameter, NormalParameter, WeibullParameter, RayleighParameter, ExponParameter, CustomParameter, UniformParameter, DParameter, ConstantParameter, TriangParameter
-try:
-    from smolyak import Smolyak
-except ImportError,e:
-    sys.stderr.write("PUQ: warning, could not import the smolyak module. It's capability will be disabled. Msg:{}".format(e.message))
+from smolyak import Smolyak
 from scaling import Scaling
 from scaling import Scaling
 from sweep import Sweep
