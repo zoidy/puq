@@ -6,7 +6,7 @@ This file is part of PUQ
 Copyright (c) 2013 PUQ Authors
 See LICENSE file for terms.
 '''
-from puq.pdf import NormalPDF, UniformPDF, ExperimentalPDF, WeibullPDF, RayleighPDF, ExponPDF, PDF,TrianglePDF
+from puq.pdf import NormalPDF, LognormalPDF, UniformPDF, ExperimentalPDF, WeibullPDF, RayleighPDF, ExponPDF, PDF,TrianglePDF
 from puq.constant import Constant
 from logging import debug
 import sys, matplotlib, sympy
@@ -191,6 +191,37 @@ class NormalParameter(Parameter):
     # This is what you see when the object is printed
     def __str__(self):
         return "NormalParameter %s (%s)\n\t%s" % (self.name, self.description, self.pdf.__str__())
+        
+class LognormalParameter(Parameter):
+    '''
+    Class implementing a Parameter with a LogNormal distribution.
+
+    Args:
+      name: Name of the parameter. This should be a short name, like a variable.
+      description:  A longer description of the parameter.
+      attrs: a list of tuples ('attrname',attrval) which are additional attributes to assign
+      to this parameter.
+      kwargs: Keyword args.  Valid args are:
+
+        ======== ============================
+        Arg      Description
+        ======== ============================
+        mean     The mean of the lognormal distribution
+        dev      The standard lognormal deviation
+        ======== ============================
+    '''
+    def __init__(self, name, description,attrs=None, **kwargs):
+        debug("name:%s desc:%s kwargs:%s" % (name, description, kwargs))
+        self.name = self.check_name(name)
+        self.description = description
+        self.caldata = kwargs.pop('caldata', None)
+        self.pdf = LognormalPDF(**kwargs)
+        self.attrs=attrs
+
+    # This is what you see when the object is printed
+    def __str__(self):
+        return "LognormalParameter %s (%s)\n\t%s" % (self.name, self.description, self.pdf.__str__())
+
 
 class RayleighParameter(Parameter):
     '''

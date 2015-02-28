@@ -570,7 +570,32 @@ def NormalPDF(mean, dev, min=None, max=None):
     x = np.linspace(min, max, nsamp)
     return PDF(x, sfunc.pdf(x))
 
+def LognormalPDF(mean, dev,  max=None):
+    """
+    Creates a lognormal  Probability Density Function. **Experimental**
 
+    :param mean: The mean of the lognormal dist.
+    :param dev: The standard deviation of the lognormal dist.
+    :returns: A PDF object
+
+    For the normal distribution, you must specify **mean** and **dev**.
+
+    :Example:
+
+    >>> n = NormalPDF(10,1)
+    >>> n = NormalPDF(mean=10, dev=1)
+    >>> n = NormalPDF(mean=10, dev=1, min=10)
+    """
+    if dev <= 0:
+        raise ValueError("Deviation must be positive.")
+
+    #http://stackoverflow.com/questions/8870982/how-do-i-get-a-lognormal-distribution-in-python-with-mu-and-sigma
+    sfunc=scipy.stats.lognorm(dev,loc=0,scale=np.exp(mean))
+    min, max = _get_range(sfunc, 0, max)
+    nsamp = options['pdf']['numpart']
+    x = np.linspace(0, max, nsamp)
+    return PDF(x, sfunc.pdf(x))
+    
 def NetPDF(addr):
     """
     Retrieves a PDF from a remote address.
