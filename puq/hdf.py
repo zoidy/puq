@@ -16,7 +16,7 @@ def hdf5_wrap(func):
     @wraps(func)
     def wrapped(hf, *args, **kargs):
         close = False
-        if type(hf) == str:
+        if type(hf) == str or type(hf)==unicode:
             hf = h5py.File(hf, 'r')
             close = True
         res = func(hf, *args, **kargs)
