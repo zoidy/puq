@@ -558,7 +558,7 @@ class InteractiveHostMP(Host):
                     self.wait(cpus)
                 
                 t_start=time.clock()
-                job_info_args={'jobnum':jobnum, 'start_time':t_start}
+                job_info_args={'jobnum':jobnum, 'start_time':t_start, 'sweepid':self.sweepid}
                 job_other_args=shlex.split(j['args']) #j['args'] should be a string
                 
                 funcstr=str(self._testProgramFunc) + '\n'

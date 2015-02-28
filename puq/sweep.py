@@ -33,10 +33,15 @@ class Sweep(object):
       caldata(array: Experimental data for calibration. Optional.
       calerr(float): Measurement error in the experimental data.
       description(string): Optional description of this run.
+      sweepid: an optional string that uniquely identifies this sweep.
+      This string is passed to the TestProgram by the Host object
+      using the jobinfo parameter.
     """
 
-    def __init__(self, psweep, host, prog, caldata=None, calerr=None, description=''):
+    def __init__(self, psweep, host, prog, caldata=None, calerr=None, description='',sweepid=''):
         self.host = host
+        self.host.sweepid=sweepid
+        
         self._reinit = False
 
         if isinstance(prog, TestProgram):
