@@ -96,7 +96,7 @@
 <h1>Sweep Reference<a class="headerlink" href="#sweep-reference" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="puq.Sweep">
-<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">Sweep</tt><big>(</big><em>psweep</em>, <em>host</em>, <em>prog</em>, <em>caldata=None</em>, <em>calerr=None</em>, <em>description=''</em><big>)</big><a class="headerlink" href="#puq.Sweep" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">puq.</tt><tt class="descname">Sweep</tt><big>(</big><em>psweep</em>, <em>host</em>, <em>prog</em>, <em>caldata=None</em>, <em>calerr=None</em>, <em>description=''</em>, <em>sweepid=''</em><big>)</big><a class="headerlink" href="#puq.Sweep" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an object that contains all the information about
 a parameter sweep.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -115,6 +115,10 @@ TestProgram object: See <a class="reference internal" href="testprogram.html#puq
 Measurement error in the experimental data.</li>
 <li><strong>description</strong> (<em>string</em>) &#8211;
 Optional description of this run.</li>
+<li><strong>sweepid</strong> &#8211;
+an optional string that uniquely identifies this sweep.</li>
+<li><strong>This string is passed to the TestProgram by the Host object</strong></li>
+<li><strong>using the jobinfo parameter.</strong></li>
 </ul>
 </td>
 </tr>
