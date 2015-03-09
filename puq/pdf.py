@@ -570,12 +570,14 @@ def NormalPDF(mean, dev, min=None, max=None):
     x = np.linspace(min, max, nsamp)
     return PDF(x, sfunc.pdf(x))
 
-def LognormalPDF(mean, dev,  max=None):
+def LognormalPDF(mean, dev, min=None,  max=None):
     """
     Creates a lognormal  Probability Density Function. **Experimental**
 
     :param mean: The mean of the lognormal dist.
     :param dev: The standard deviation of the lognormal dist.
+    :param min: A minimum value for the PDF (default None) Must be >=0.
+    :param max: A maximum value for the PDF (default None).
     :returns: A PDF object
 
     For the normal distribution, you must specify **mean** and **dev**.
@@ -588,12 +590,13 @@ def LognormalPDF(mean, dev,  max=None):
     """
     if dev <= 0:
         raise ValueError("Deviation must be positive.")
+    if min==None: min=0
 
     #http://stackoverflow.com/questions/8870982/how-do-i-get-a-lognormal-distribution-in-python-with-mu-and-sigma
     sfunc=scipy.stats.lognorm(dev,loc=0,scale=np.exp(mean))
-    min, max = _get_range(sfunc, 0, max)
+    min, max = _get_range(sfunc, __builtin__.max(min,0), max)
     nsamp = options['pdf']['numpart']
-    x = np.linspace(0, max, nsamp)
+    x = np.linspace(min, max, nsamp)
     return PDF(x, sfunc.pdf(x))
     
 def NetPDF(addr):

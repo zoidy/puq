@@ -314,12 +314,20 @@ class Sweep(object):
 
     def _dump_hdf5(self, grp, line, job, mjob):
         debug("Dump %s : %s" % (job, line))
+        #print "Dump %s : %s" % (job, line)
         global _vcache, _dcache
 
         # old format used single quotes.
         if line.startswith("{'"):
+            #sometimes nans can still slip through. if so set it to null 
+            #which gets converted to None when loading the json
+            if "'value': nan" in line:
+                line=line.replace("'value': nan","'value': null")                
+                print('warning: output value for job {} was nan'.format(job))
+            
             line = line.replace("'", '"')
 
+        
         x = unpickle(line)
         v = x['value']
         n = x['name']
